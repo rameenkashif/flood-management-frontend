@@ -1,3 +1,201 @@
-import { Typography, Container } from '@mui/material';
-function Volunteers() { return (<Container><Typography variant="h4">Volunteers Page</Typography></Container>); }
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  Typography,
+  Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Grid,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+
+function Volunteers() {
+  const [open, setOpen] = useState(false);
+  const [volunteers, setVolunteers] = useState([]);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    location: "",
+    skill: "",
+    status: "Available",
+  });
+  const [skillFilter, setSkillFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setForm({
+      name: "",
+      phone: "",
+      location: "",
+      skill: "",
+      status: "Available",
+    });
+  };
+
+  const handleSubmit = () => {
+    if (form.name && form.phone && form.skill) {
+      setVolunteers([...volunteers, form]);
+      handleClose();
+    }
+  };
+
+  const filteredVolunteers = volunteers.filter((v) => {
+    const skillMatch = skillFilter ? v.skill === skillFilter : true;
+    const statusMatch = statusFilter ? v.status === statusFilter : true;
+    return skillMatch && statusMatch;
+  });
+
+  return (
+    <Container sx={{ mt: 4, mb: 5 }}>
+      {/* Header Section */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          Volunteer Management
+        </Typography>
+        <Button variant="contained" color="primary" onClick={handleOpen}>
+          + Register as Volunteer
+        </Button>
+      </Box>
+
+      {/* Volunteer List */}
+      <Grid container spacing={3}>
+        {filteredVolunteers.length === 0 ? (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, textAlign: "center" }}>
+              <Typography>No volunteers registered yet.</Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          filteredVolunteers.map((vol, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <Paper sx={{ p: 3, borderLeft: "4px solid #1565d8" }}>
+                <Typography variant="h6" fontWeight="bold">
+                  {vol.name}
+                </Typography>
+                <Typography variant="body2">📞 {vol.phone}</Typography>
+                <Typography variant="body2">📍 {vol.location}</Typography>
+                <Typography variant="body2">🧰 Skill: {vol.skill}</Typography>
+                <Typography
+                  variant="body2"
+                  color={vol.status === "Available" ? "green" : "orange"}
+                >
+                  ⚙️ Status: {vol.status}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))
+        )}
+      </Grid>
+
+      {/* Filters */}
+      <Box
+        mt={5}
+        p={2}
+        display="flex"
+        flexWrap="wrap"
+        justifyContent="space-between"
+        sx={{ bgcolor: "#f5f5f5", borderRadius: 2 }}
+      >
+        <FormControl sx={{ minWidth: 200, mb: { xs: 2, md: 0 } }}>
+          <InputLabel>Filter by Skill</InputLabel>
+          <Select
+            value={skillFilter}
+            label="Filter by Skill"
+            onChange={(e) => setSkillFilter(e.target.value)}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="Medical">Medical</MenuItem>
+            <MenuItem value="Tech">Tech</MenuItem>
+            <MenuItem value="Search & Rescue">Search & Rescue</MenuItem>
+            <MenuItem value="Food Distribution">Food Distribution</MenuItem>
+            <MenuItem value="Donation Collector">Donation Collector</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Filter by Status</InputLabel>
+          <Select
+            value={statusFilter}
+            label="Filter by Status"
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="Available">Available</MenuItem>
+            <MenuItem value="Deployed">Deployed</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Register Popup */}
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Register as Volunteer</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Full Name"
+            margin="normal"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Phone Number"
+            margin="normal"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Location"
+            margin="normal"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Skill</InputLabel>
+            <Select
+              value={form.skill}
+              label="Skill"
+              onChange={(e) => setForm({ ...form, skill: e.target.value })}
+            >
+              <MenuItem value="Medical">Medical</MenuItem>
+              <MenuItem value="Tech">Tech</MenuItem>
+              <MenuItem value="Search & Rescue">Search & Rescue</MenuItem>
+              <MenuItem value="Food Distribution">Food Distribution</MenuItem>
+              <MenuItem value="Donation Collector">Donation Collector</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={form.status}
+              label="Status"
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+            >
+              <MenuItem value="Available">Available</MenuItem>
+              <MenuItem value="Deployed">Deployed</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            Register
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+}
+
 export default Volunteers;

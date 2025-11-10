@@ -1,60 +1,25 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Container,
-  Grid,
-  Paper,
-  Box,
-} from '@mui/material';
+import { Container, Grid, Paper, Typography, Box } from '@mui/material';
 import FloodPredictionCard from '../components/FloodPredictionCard';
 import ReliefCampCard from '../components/ReliefCampCard';
 import VolunteerCard from '../components/VolunteerCard';
 import AssetCard from '../components/AssetCard';
-import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 function Dashboard() {
-  const navigate = useNavigate();
+  // ✅ Sample asset data to prevent runtime crash
+  const sampleAsset = {
+    photo: "https://via.placeholder.com/400x200",
+    name: "Rescue Boat",
+    type: "Equipment",
+    description: "Used for flood area evacuations",
+    value: "250000",
+    location: "Islamabad",
+    dateRegistered: "2025-10-25",
+  };
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <AppBar position="static" color="default" sx={{ boxShadow: 1 }}>
-        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            FloodGuard
-          </Typography>
-
-          <Box>
-            <Button color="primary" onClick={() => navigate('/dashboard')}>
-              Dashboard
-            </Button>
-            <Button color="primary" onClick={() => navigate('/alerts')}>
-              Flood Alerts
-            </Button>
-            <Button color="primary" onClick={() => navigate('/digital-locker')}>
-              Asset Locker
-            </Button>
-            <Button color="primary" onClick={() => navigate('/relief-camps')}>
-              Relief Camps
-            </Button>
-            <Button color="primary" onClick={() => navigate('/volunteers')}>
-              Volunteers
-            </Button>
-            <Button color="primary" onClick={() => navigate('/donations')}>
-              Donations
-            </Button>
-            <Button color="primary" onClick={() => navigate('/community')}>
-              Community
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
       {/* Welcome Section */}
       <Box
         sx={{
@@ -110,27 +75,20 @@ function Dashboard() {
             </Paper>
           </Grid>
         </Grid>
-
-        
       </Container>
 
       {/* Chart & Map Section */}
       <Container>
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: 'bold', mb: 2, mt: 3 }}
-        >
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2, mt: 3 }}>
           Analytics & Monitoring
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            {/* FloodPredictionCard includes rainfall trend/chart */}
             <FloodPredictionCard />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            {/* ReliefCampCard includes map or camp visuals */}
             <ReliefCampCard />
           </Grid>
 
@@ -138,13 +96,14 @@ function Dashboard() {
             <VolunteerCard />
           </Grid>
 
+          {/* ✅ Fixed AssetCard - now safely receives asset data */}
           <Grid item xs={12} md={6}>
-            <AssetCard />
+            <AssetCard asset={sampleAsset} />
           </Grid>
         </Grid>
       </Container>
 
-      {/* Footer (optional if defined) */}
+      {/* Footer */}
       <Box sx={{ mt: 5 }}>
         <Footer />
       </Box>
