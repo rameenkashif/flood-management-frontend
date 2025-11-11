@@ -61,8 +61,8 @@ function DigitalLocker() {
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        💼 Digital Asset Locker
+      <Typography variant="h4" fontWeight={600}>
+         Digital Asset Locker
       </Typography>
       <Typography variant="body1" sx={{ mb: 3 }}>
         Register and protect your valuable assets with digital insurance.

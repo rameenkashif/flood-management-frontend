@@ -1,6 +1,6 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -13,20 +13,25 @@ import Community from "./pages/Community";
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/"; // hide Navbar on login page
+  const { isLoggedIn } = React.useContext(AuthContext);
+
+  // Hide navbar on login page
+  const hideNavbar = location.pathname === "/login";
 
   return (
     <>
       {!hideNavbar && <Navbar />}
+
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/digital-locker" element={<DigitalLocker />} />
-        <Route path="/relief-camps" element={<ReliefCamps />} />
-        <Route path="/volunteers" element={<Volunteers />} />
-        <Route path="/alerts" element={<Alerts />} />
-        <Route path="/donations" element={<Donations />} />
-        <Route path="/community" element={<Community />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />} />
+        <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
+        <Route path="/digital-locker" element={isLoggedIn ? <DigitalLocker /> : <Navigate to="/login" />} />
+        <Route path="/relief-camps" element={isLoggedIn ? <ReliefCamps /> : <Navigate to="/login" />} />
+        <Route path="/volunteers" element={isLoggedIn ? <Volunteers /> : <Navigate to="/login" />} />
+        <Route path="/alerts" element={isLoggedIn ? <Alerts /> : <Navigate to="/login" />} />
+        <Route path="/donations" element={isLoggedIn ? <Donations /> : <Navigate to="/login" />} />
+        <Route path="/community" element={isLoggedIn ? <Community /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} />} />
       </Routes>
     </>
   );

@@ -11,9 +11,9 @@ function Login() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    const success = login({ email, password }); // Pass email & password
+    const success = login({ email, password }); // frontend-only
     if (success) {
-      navigate('/dashboard'); // Redirect to dashboard
+      navigate('/dashboard'); // redirect after login
     } else {
       alert('Please enter both email and password!');
     }

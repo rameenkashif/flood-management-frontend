@@ -97,3 +97,91 @@ export const getAssetSummary = async () => {
     totalValue,
   };
 };
+// ---------------- RELIEF CAMPS MOCK DATA ---------------- //
+let localCamps = JSON.parse(localStorage.getItem("reliefCamps") || "[]");
+
+export const getReliefCamps = async () => {
+  await new Promise((r) => setTimeout(r, 200));
+  return localCamps.length
+    ? localCamps
+    : [
+        {
+          name: "Central Relief Camp Karachi",
+          region: "Karachi",
+          location: "National Stadium Road, Karachi",
+          totalCapacity: 5000,
+          currentCapacity: 2800,
+          contact: "0321-1234567",
+          facilities: ["Food", "Water", "Medical", "Shelter"],
+          coordinates: { lat: 24.8607, lng: 67.0011 },
+        },
+        {
+          name: "Lahore City Relief Center",
+          region: "Lahore",
+          location: "Expo Center, Johar Town, Lahore",
+          totalCapacity: 3500,
+          currentCapacity: 1200,
+          contact: "0300-9876543",
+          facilities: ["Food", "Water", "Medical", "Shelter"],
+          coordinates: { lat: 31.5204, lng: 74.3587 },
+        },
+        {
+          name: "Hyderabad Safe Zone",
+          region: "Hyderabad",
+          location: "Civic Center, Latifabad, Hyderabad",
+          totalCapacity: 2000,
+          currentCapacity: 450,
+          contact: "0345-7778889",
+          facilities: ["Food", "Water", "Shelter"],
+          coordinates: { lat: 25.3960, lng: 68.3578 },
+        },
+      ];
+};
+
+export const addReliefCamp = async (campData) => {
+  await new Promise((r) => setTimeout(r, 200));
+  localCamps.push(campData);
+  localStorage.setItem("reliefCamps", JSON.stringify(localCamps));
+  return campData;
+};
+
+// ---------------- COMMUNITY UPDATES MOCK DATA ---------------- //
+let localCommunity = JSON.parse(localStorage.getItem("community") || "[]");
+
+export const getCommunityUpdates = async () => {
+  await new Promise((r) => setTimeout(r, 300));
+  if (localCommunity.length === 0) {
+    localCommunity = [
+      {
+        name: "NDMA Official",
+        region: "Karachi",
+        type: "Announcement",
+        priority: "High",
+        title: "Relief Camp Operations Extended",
+        message:
+          "All relief camps in Karachi will remain operational 24/7. Free transportation available from main intersections. Medical teams on standby.",
+        tags: "relief, transportation, medical",
+      },
+      {
+        name: "Muhammad Raza",
+        region: "Multan",
+        type: "Request",
+        priority: "Urgent",
+        title: "Urgent: Need Drinking Water in Sector 12",
+        message:
+          "Our area has been without clean drinking water for 48 hours. Approximately 500 families affected. Water tanker urgently needed.",
+        tags: "water, emergency, sector12",
+      },
+    ];
+    localStorage.setItem("community", JSON.stringify(localCommunity));
+  }
+  return localCommunity;
+};
+
+export const addCommunityUpdate = async (data) => {
+  await new Promise((r) => setTimeout(r, 300));
+  const newUpdate = { ...data, id: Date.now() };
+  localCommunity.push(newUpdate);
+  localStorage.setItem("community", JSON.stringify(localCommunity));
+  return newUpdate;
+};
