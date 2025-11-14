@@ -20,7 +20,15 @@ function Login() {
   };
 
   return (
-    <Container maxWidth="sm" style={{ marginTop: '100px' }}>
+    <Container maxWidth="sm" style={{ marginTop: '100px', textAlign: 'center' }}>
+
+      {/* Logo Section */}
+      <img 
+        src="/floodguard-logo.png.png" 
+        alt="FloodGuard Logo"
+        style={{ width: '150px', marginBottom: '20px' }}
+      />
+
       <Typography variant="h4" gutterBottom>
         Flood Management Login
       </Typography>
