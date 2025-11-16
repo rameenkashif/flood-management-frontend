@@ -204,3 +204,14 @@ export const loginUser = async (credentials) => {
     throw err.response?.data || { message: err.message };
   }
 };
+
+// Force backend to fetch external alerts (immediate)
+export const refreshAlerts = async () => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/floods/refresh`, null, { timeout: 10000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Failed to refresh alerts:', err.message || err);
+    throw err;
+  }
+};

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Typography,
   Container,
@@ -13,7 +13,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { getFloodData, createAlert } from "../services/api";
+import { getFloodData, createAlert, refreshAlerts } from "../services/api";
 import AlertCard from "../components/AlertCard";
 
 const severityOptions = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -24,6 +24,8 @@ function Alerts() {
   const [regionFilter, setRegionFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const pollingRef = useRef(null);
 
   const [newAlert, setNewAlert] = useState({
     region: "",
@@ -38,6 +40,14 @@ function Alerts() {
 
   useEffect(() => {
     fetchData();
+    // start polling every 60 seconds
+    pollingRef.current = setInterval(() => {
+      fetchData();
+    }, 60 * 1000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -67,9 +77,36 @@ function Alerts() {
   }, [regionFilter, severityFilter]);
 
   const handleCreateAlert = async () => {
-    await createAlert(newAlert);
-    setOpen(false);
-    fetchData();
+    try {
+      setLoading(true);
+      await createAlert({
+        ...newAlert,
+        rainfall: Number(newAlert.rainfall) || 0,
+        waterLevel: Number(newAlert.waterLevel) || 0,
+        affectedPopulation: Number(newAlert.affected) || 0,
+        lat: Number(newAlert.lat) || 0,
+        lng: Number(newAlert.lng) || 0,
+      });
+      setOpen(false);
+      await fetchData();
+    } catch (err) {
+      alert('Failed to create alert');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefreshExternal = async () => {
+    try {
+      setLoading(true);
+      await refreshAlerts();
+      await fetchData();
+      alert('External alerts refreshed');
+    } catch (err) {
+      alert('Failed to refresh external alerts');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,14 +143,19 @@ function Alerts() {
           </TextField>
         </div>
 
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => setOpen(true)}
-          sx={{ height: "55px" }}
-        >
-          + Create Alert
-        </Button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading}>
+            Refresh External
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => setOpen(true)}
+            sx={{ height: "55px" }}
+          >
+            + Create Alert
+          </Button>
+        </div>
       </div>
 
       {/* Map */}
@@ -124,22 +166,37 @@ function Alerts() {
           style={{ height: "350px", width: "100%", borderRadius: "10px" }}
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {filteredAlerts.map((alert, i) => (
-            <Marker
-              key={i}
-              position={[alert.lat, alert.lng]}
-              icon={L.icon({
-                iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-                iconSize: [35, 35],
-              })}
-            >
-              <Popup>
-                <strong>{alert.region}</strong>
-                <br />
-                Severity: {alert.severity}
-              </Popup>
-            </Marker>
-          ))}
+          {filteredAlerts.map((alert, i) => {
+            const lat = Number(alert.lat) || 0;
+            const lng = Number(alert.lng) || 0;
+            // choose color by severity
+            const color =
+              (alert.severity && alert.severity.toUpperCase() === 'CRITICAL' && 'red') ||
+              (alert.severity && alert.severity.toUpperCase() === 'HIGH' && 'orange') ||
+              (alert.severity && alert.severity.toUpperCase() === 'MEDIUM' && 'yellow') ||
+              'green';
+
+            const pinHtml = `<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='${color}'><path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z'/></svg>`;
+
+            const icon = L.divIcon({
+              html: pinHtml,
+              className: '',
+              iconSize: [36, 36],
+              iconAnchor: [18, 36],
+            });
+
+            return (
+              <Marker key={i} position={[lat, lng]} icon={icon}>
+                <Popup>
+                  <strong>{alert.region}</strong>
+                  <br />
+                  Severity: {alert.severity}
+                  <br />
+                  {alert.message}
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
 
