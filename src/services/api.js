@@ -31,9 +31,9 @@ let localAlerts = [
 const simulateDelay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ✅ Flood Data APIs
-export const getFloodData = async () => {
+export const getFloodData = async (params = {}) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/floods`, { timeout: 2000 });
+    const response = await axios.get(`${API_BASE_URL}/floods`, { params, timeout: 2000 });
     return response.data;
   } catch (error) {
     console.warn("⚠️ Backend unreachable — using local mock data.");

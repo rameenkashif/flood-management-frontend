@@ -12,9 +12,10 @@ function AlertCard({ alert }) {
   if (!alert) return null;
 
   const sev = (alert.severity || "LOW").toLowerCase();
+  const isActive = typeof alert.active === 'undefined' ? true : !!alert.active;
 
   return (
-    <div className={`alert-card ${sev}`}>
+    <div className={`alert-card ${sev}`} style={{ opacity: isActive ? 1 : 0.5 }}>
       <div className="alert-header">
         <h3 className="alert-title">{alert.region}</h3>
         <div className={`severity-pill ${sev}`}>{alert.severity}</div>
@@ -40,7 +41,10 @@ function AlertCard({ alert }) {
       </div>
 
       <div className="alert-footer">
-        <span>Status: Active</span>
+        <span>Status: {isActive ? 'Active' : 'Inactive'}</span>
+        {alert.endsAt && (
+          <small style={{ marginLeft: 12 }}>Ended: {new Date(alert.endsAt).toLocaleString()}</small>
+        )}
       </div>
     </div>
   );

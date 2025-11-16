@@ -4,10 +4,18 @@ const Alert = require('../models/Alert');
 // List alerts with optional filtering
 exports.listAlerts = async (req, res) => {
   try {
-    const { region, severity, limit = 100 } = req.query;
+    const { region, severity, limit = 100, active, showPrevious } = req.query;
     const filter = {};
     if (region) filter.region = { $regex: region, $options: 'i' };
     if (severity) filter.severity = severity;
+    // active: explicit true/false; showPrevious=true -> active=false; default -> active=true
+    if (typeof active !== 'undefined') {
+      filter.active = String(active) === 'true';
+    } else if (String(showPrevious) === 'true') {
+      filter.active = false;
+    } else {
+      filter.active = true;
+    }
 
     const alerts = await Alert.find(filter).sort({ createdAt: -1 }).limit(Number(limit));
     res.json(alerts);
@@ -25,8 +33,22 @@ exports.saveAlert = async (alertData) => {
       lat: alertData.lat,
       lng: alertData.lng,
     });
-    if (exists) return exists;
-    const a = await Alert.create(alertData);
+    if (exists) {
+      // Update existing alert: refresh its data and mark active
+      exists.severity = alertData.severity || exists.severity;
+      exists.rainfall = alertData.rainfall ?? exists.rainfall;
+      exists.waterLevel = alertData.waterLevel ?? exists.waterLevel;
+      exists.affectedPopulation = alertData.affectedPopulation ?? exists.affectedPopulation;
+      exists.message = alertData.message || exists.message;
+      exists.lat = alertData.lat ?? exists.lat;
+      exists.lng = alertData.lng ?? exists.lng;
+      exists.source = alertData.source || exists.source;
+      exists.active = true;
+      exists.endsAt = alertData.endsAt || null;
+      await exists.save();
+      return exists;
+    }
+    const a = await Alert.create({ ...alertData, active: true });
     return a;
   } catch (err) {
     console.error('Error saving alert:', err.message || err);
@@ -92,7 +114,13 @@ exports.fetchExternalAlerts = async (options = {}) => {
       source: 'SIMULATED',
     }));
 
-    // Save simulated alerts
+    // Deactivate previous simulated alerts then save simulated alerts
+    try {
+      await Alert.updateMany({ source: 'SIMULATED', active: true }, { $set: { active: false, endsAt: new Date() } });
+    } catch (e) {
+      console.warn('Failed to deactivate previous simulated alerts:', e.message || e);
+    }
+
     for (const s of simulated) {
       await exports.saveAlert(s);
     }
@@ -138,6 +166,14 @@ exports.fetchExternalAlerts = async (options = {}) => {
     } catch (err) {
       console.warn(`Failed to fetch weather for ${loc.name}:`, err.message || err);
     }
+  }
+
+  // Mark previously active OPENWEATHER alerts inactive if they were not in this fetch
+  try {
+    const regions = results.map((r) => r.region);
+    await Alert.updateMany({ source: 'OPENWEATHER', region: { $nin: regions }, active: true }, { $set: { active: false, endsAt: new Date() } });
+  } catch (e) {
+    console.warn('Failed to deactivate stale OPENWEATHER alerts:', e.message || e);
   }
 
   return results;

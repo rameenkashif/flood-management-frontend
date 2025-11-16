@@ -23,6 +23,7 @@ function Alerts() {
   const [filteredAlerts, setFilteredAlerts] = useState([]);
   const [regionFilter, setRegionFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
+  const [viewFilter, setViewFilter] = useState('active'); // active | previous | all
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const pollingRef = useRef(null);
@@ -51,7 +52,10 @@ function Alerts() {
   }, []);
 
   const fetchData = async () => {
-    const data = await getFloodData();
+    const params = {};
+    if (viewFilter === 'active') params.active = true;
+    else if (viewFilter === 'previous') params.active = false;
+    const data = await getFloodData(params);
     setAlerts(data);
     setFilteredAlerts(data);
   };
@@ -75,6 +79,11 @@ function Alerts() {
   useEffect(() => {
     filterAlerts();
   }, [regionFilter, severityFilter]);
+
+  useEffect(() => {
+    // refetch when view changes
+    fetchData();
+  }, [viewFilter]);
 
   const handleCreateAlert = async () => {
     try {
@@ -140,6 +149,17 @@ function Alerts() {
                 {s}
               </MenuItem>
             ))}
+          </TextField>
+          <TextField
+            select
+            sx={{ width: 160 }}
+            label="View"
+            value={viewFilter}
+            onChange={(e) => setViewFilter(e.target.value)}
+          >
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="previous">Previous</MenuItem>
+            <MenuItem value="all">All</MenuItem>
           </TextField>
         </div>
 
