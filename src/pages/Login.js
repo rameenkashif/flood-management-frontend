@@ -4,18 +4,38 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Container, Typography } from '@mui/material';
 
 function Login() {
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const success = login({ email, password }); // frontend-only
-    if (success) {
-      navigate('/dashboard'); // redirect after login
-    } else {
-      alert('Please enter both email and password!');
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      await login({ email, password });
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+      await register({ name, email, phone, password });
+      // after successful registration, navigate to dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,6 +52,25 @@ function Login() {
       <Typography variant="h4" gutterBottom>
         Flood Management Login
       </Typography>
+
+      {isRegistering && (
+        <>
+          <TextField
+            label="Name"
+            fullWidth
+            margin="normal"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            label="Phone"
+            fullWidth
+            margin="normal"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </>
+      )}
 
       <TextField
         label="Email"
@@ -54,10 +93,20 @@ function Login() {
         variant="contained"
         color="primary"
         fullWidth
-        onClick={handleLogin}
+        onClick={isRegistering ? handleRegister : handleLogin}
         style={{ marginTop: '20px' }}
+        disabled={loading}
       >
-        Login
+        {isRegistering ? (loading ? 'Registering...' : 'Register') : (loading ? 'Logging in...' : 'Login')}
+      </Button>
+
+      <Button
+        color="secondary"
+        fullWidth
+        onClick={() => setIsRegistering(!isRegistering)}
+        style={{ marginTop: '12px' }}
+      >
+        {isRegistering ? 'Have an account? Login' : "Don't have an account? Register"}
       </Button>
     </Container>
   );

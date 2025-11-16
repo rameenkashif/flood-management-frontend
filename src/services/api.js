@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api"; // your backend URL
+const API_BASE_URL = "/api"; // use relative path and rely on react dev proxy
 
 // ---------------- FLOOD ALERT MOCK DATA ---------------- //
 let localAlerts = [
@@ -184,4 +184,23 @@ export const addCommunityUpdate = async (data) => {
   localCommunity.push(newUpdate);
   localStorage.setItem("community", JSON.stringify(localCommunity));
   return newUpdate;
+};
+
+// ---------------- AUTH (backend-backed) ---------------- //
+export const registerUser = async (userData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/register`, userData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const loginUser = async (credentials) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/login`, credentials, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
 };
