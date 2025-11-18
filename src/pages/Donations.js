@@ -87,9 +87,12 @@ const Donations = () => {
   });
 
   useEffect(() => {
-    // Fetch mock donations (simulate API)
-    setDonations(mockDonations);
-  }, []);
+  fetch("http://localhost:5000/api/donations")
+    .then((res) => res.json())
+    .then((data) => setDonations(data))
+    .catch((err) => console.log(err));
+}, []);
+
 
   const handleFilterChange = (event) => {
     setFilteredType(event.target.value);
@@ -119,8 +122,15 @@ const Donations = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const id = Date.now();
-    setDonations((prev) => [...prev, { ...newDonation, id }]);
+    
+  fetch("http://localhost:5000/api/donations", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(newDonation),
+})
+  .then((res) => res.json())
+  .then((data) => setDonations((prev) => [...prev, data]));
+
     setNewDonation({
       name: "",
       contact: "",

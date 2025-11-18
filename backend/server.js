@@ -12,6 +12,29 @@ const floodController = require('./Controllers/floodController');
 
 const app = express();
 const volunteerRoutes = require("./routes/volunteers");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import donationRoutes from "./routes/donationRoutes.js";
+
+dotenv.config();
+
+
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use("/api/donations", donationRoutes);
+
+// MongoDB connect
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
+
+const PORT1 = process.env.PORT1 || 5000;
+app.listen(PORT1, () => console.log(`Server running on port ${PORT1}`));
 
 
 // Middleware
