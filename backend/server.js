@@ -11,11 +11,13 @@ const floodRoutes = require('./routes/floodRoutes');
 const floodController = require('./Controllers/floodController');
 
 const app = express();
+const volunteerRoutes = require("./routes/volunteers");
+
 
 // Middleware
 app.use(cors());                     // Enable cross-origin requests
 app.use(express.json());             // Parse JSON request bodies
-
+app.use("/api/volunteers", volunteerRoutes);
 // Routes
 app.use('/api/users', userRoutes);       // User registration & login
 app.use('/api/assets', assetRoutes);     // Asset management
