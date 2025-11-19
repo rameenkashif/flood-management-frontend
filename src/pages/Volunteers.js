@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { getVolunteers, createVolunteer } from "../services/api";
 
 function Volunteers() {
   const [open, setOpen] = useState(false);
@@ -30,6 +31,16 @@ function Volunteers() {
   const [skillFilter, setSkillFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  useEffect(() => {
+    const fetchVolunteers = async () => {
+      const data = await getVolunteers();
+      if (data && Array.isArray(data)) {
+        setVolunteers(data);
+      }
+    };
+    fetchVolunteers();
+  }, []);
+
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
@@ -42,10 +53,15 @@ function Volunteers() {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (form.name && form.phone && form.skill) {
-      setVolunteers([...volunteers, form]);
-      handleClose();
+      try {
+        const data = await createVolunteer(form);
+        setVolunteers([...volunteers, data]);
+        handleClose();
+      } catch (err) {
+        console.error("Error registering volunteer:", err);
+      }
     }
   };
 
@@ -77,7 +93,7 @@ function Volunteers() {
           </Grid>
         ) : (
           filteredVolunteers.map((vol, index) => (
-            <Grid item xs={12} md={4} key={index}>
+            <Grid item xs={12} md={4} key={vol._id || index}>
               <Paper sx={{ p: 3, borderLeft: "4px solid #1565d8" }}>
                 <Typography variant="h6" fontWeight="bold">
                   {vol.name}

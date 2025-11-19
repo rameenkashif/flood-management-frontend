@@ -1,5 +1,5 @@
-import express from "express";
-import Donation from "../models/Donation.js";
+const express = require("express");
+const Donation = require("../models/Donation");
 
 const router = express.Router();
 
@@ -48,4 +48,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

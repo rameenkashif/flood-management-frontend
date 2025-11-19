@@ -14,7 +14,7 @@ const alertSchema = new mongoose.Schema({
   endsAt: { type: Date, default: null },
 }, { timestamps: true });
 
-// optional TTL index if you later want auto-deletion based on endsAt
-alertSchema.index({ endsAt: 1 }, { expireAfterSeconds: 0 });
+// Note: do NOT create a TTL index here if you want to keep previous (inactive) alerts.
+// If you later want automatic deletion, create a TTL index manually with a suitable expiry (e.g. 30 days).
 
 module.exports = mongoose.model('Alert', alertSchema);

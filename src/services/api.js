@@ -215,3 +215,61 @@ export const refreshAlerts = async () => {
     throw err;
   }
 };
+
+// ✅ Donations APIs
+export const getDonations = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/donations`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Backend unreachable for donations.');
+    return [];
+  }
+};
+
+export const createDonation = async (donationData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/donations`, donationData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const updateDonation = async (id, donationData) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/donations/${id}`, donationData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const deleteDonation = async (id) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/donations/${id}`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+// ✅ Volunteers APIs
+export const getVolunteers = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/volunteers`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Backend unreachable for volunteers.');
+    return [];
+  }
+};
+
+export const createVolunteer = async (volunteerData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/volunteers`, volunteerData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};

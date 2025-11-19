@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listAlerts } = require('../Controllers/floodController');
-
-const floodController = require('../Controllers/floodController');
+const floodController = require('../Controllers/floodController_fixed');
 
 // GET /api/floods
 router.get('/', floodController.listAlerts);
