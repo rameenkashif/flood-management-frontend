@@ -9,18 +9,46 @@ function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const success = login({ email, password }); // frontend-only
-    if (success) {
-      navigate('/dashboard'); // redirect after login
-    } else {
-      alert('Please enter both email and password!');
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      await login({ email, password });
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+      await register({ name, email, phone, password });
+      // after successful registration, navigate to dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Container maxWidth="sm" style={{ marginTop: '100px', textAlign: 'center' }}>
+
+      {/* Logo Section */}
+      <img 
+        src="/floodguard-logo.png.png" 
+        alt="FloodGuard Logo"
+        style={{ width: '150px', marginBottom: '20px' }}
+      />
+
       <Typography variant="h4" gutterBottom>
         Flood Management Login
       </Typography>
@@ -79,17 +107,6 @@ function Login() {
         style={{ marginTop: '12px' }}
       >
         {isRegistering ? 'Have an account? Login' : "Don't have an account? Register"}
-      </Button>
-
-      {/* Register Button */}
-      <Button
-        variant="outlined"
-        color="secondary"
-        fullWidth
-        style={{ marginTop: '10px' }}
-        onClick={() => navigate('/register')} // navigate to Register page
-      >
-        Register New User
       </Button>
     </Container>
   );

@@ -15,8 +15,10 @@ import {
 } from "@mui/material";
 import { getAssets, addAsset, getAssetSummary } from "../services/api";
 import AssetCard from "../components/AssetCard";
+import { AuthContext } from "../context/AuthContext";
 
 function DigitalLocker() {
+  const { user } = React.useContext(AuthContext);
   const [assets, setAssets] = useState([]);
   const [summary, setSummary] = useState({ totalAssets: 0, protectedAssets: 0, totalValue: 0 });
   const [open, setOpen] = useState(false);
@@ -30,12 +32,13 @@ function DigitalLocker() {
   });
 
   useEffect(() => {
-    loadAssets();
-  }, []);
+    if (user) loadAssets();
+  }, [user]);
 
   const loadAssets = async () => {
-    const data = await getAssets();
-    const summaryData = await getAssetSummary();
+    if (!user) return;
+    const data = await getAssets(user._id);
+    const summaryData = await getAssetSummary(user._id);
     setAssets(data);
     setSummary(summaryData);
   };
@@ -52,8 +55,23 @@ function DigitalLocker() {
   };
 
   const handleSubmit = async () => {
-    if (!newAsset.name || !newAsset.value) return alert("Please fill all required fields.");
-    await addAsset(newAsset);
+    if (!user || !user._id) {
+      alert("User not found. Please log in again.");
+      return;
+    }
+    if (!newAsset.name || !newAsset.value) {
+      alert("Please fill all required fields.");
+      return;
+    }
+    await addAsset({
+      userId: user._id,
+      type: newAsset.type,
+      name: newAsset.name,
+      description: newAsset.description,
+      value: Number(newAsset.value),
+      location: newAsset.location,
+      photo: newAsset.photo
+    });
     setOpen(false);
     setNewAsset({ type: "Home/Property", name: "", description: "", value: "", location: "", photo: "" });
     loadAssets();

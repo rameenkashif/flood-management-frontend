@@ -66,34 +66,34 @@ export const filterAlerts = async (region, severity) => {
 };
 
 // ---------------- ASSET LOCKER MOCK DATA ---------------- //
-let localAssets = JSON.parse(localStorage.getItem("assets") || "[]");
+// Clear old asset data from localStorage
+localStorage.removeItem("assets");
 
-// ✅ Get assets
-export const getAssets = async () => {
-  await simulateDelay(200);
-  return localAssets;
+// Get assets for a user (requires userId and token)
+export const getAssets = async (userId) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`/api/assets/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
-// ✅ Add new asset
+// Add new asset (to backend, requires userId and token)
 export const addAsset = async (assetData) => {
-  await simulateDelay(200);
-  const newAsset = {
-    id: Date.now(),
-    ...assetData,
-    dateRegistered: new Date().toLocaleDateString(),
-  };
-  localAssets.push(newAsset);
-  localStorage.setItem("assets", JSON.stringify(localAssets));
-  return newAsset;
+  const token = localStorage.getItem('token');
+  const response = await axios.post(`/api/assets`, assetData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
-// ✅ Calculate total asset value
-export const getAssetSummary = async () => {
-  const assets = await getAssets();
+// Calculate total asset value (from backend)
+export const getAssetSummary = async (userId) => {
+  const assets = await getAssets(userId);
   const totalValue = assets.reduce((sum, asset) => sum + Number(asset.value || 0), 0);
   return {
     totalAssets: assets.length,
-    protectedAssets: assets.length, // assuming all are protected
+    protectedAssets: assets.length,
     totalValue,
   };
 };

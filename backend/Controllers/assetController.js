@@ -3,11 +3,21 @@ const Asset = require('../models/Asset');
 // Add new asset
 exports.addAsset = async (req, res) => {
   try {
-    const { userId, type, description, value } = req.body;
-    const asset = await Asset.create({ userId, type, description, value });
+    // Destructure only fields present in frontend and schema
+    const { userId, type, name, description, value, location, photo } = req.body;
+    const asset = await Asset.create({
+      userId,
+      type,
+      name,
+      description,
+      value,
+      location,
+      photo
+    });
     res.status(201).json(asset);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error in addAsset:', error);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 };
 
