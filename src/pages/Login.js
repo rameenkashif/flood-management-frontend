@@ -11,7 +11,7 @@ function Login() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    const success = login({ email, password }); // frontend-only
+    const success = login({ email, password }); // frontend-only login
     if (success) {
       navigate('/dashboard'); // redirect after login
     } else {
@@ -21,14 +21,6 @@ function Login() {
 
   return (
     <Container maxWidth="sm" style={{ marginTop: '100px', textAlign: 'center' }}>
-
-      {/* Logo Section */}
-      <img 
-        src="/floodguard-logo.png.png" 
-        alt="FloodGuard Logo"
-        style={{ width: '150px', marginBottom: '20px' }}
-      />
-
       <Typography variant="h4" gutterBottom>
         Flood Management Login
       </Typography>
@@ -58,6 +50,17 @@ function Login() {
         style={{ marginTop: '20px' }}
       >
         Login
+      </Button>
+
+      {/* Register Button */}
+      <Button
+        variant="outlined"
+        color="secondary"
+        fullWidth
+        style={{ marginTop: '10px' }}
+        onClick={() => navigate('/register')} // navigate to Register page
+      >
+        Register New User
       </Button>
     </Container>
   );
