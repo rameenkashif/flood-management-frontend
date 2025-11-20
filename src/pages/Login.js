@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Container, Typography } from '@mui/material';
 
 function Login() {
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    const success = login({ email, password }); // frontend-only login
+    const success = login({ email, password }); // frontend-only
     if (success) {
       navigate('/dashboard'); // redirect after login
     } else {
@@ -24,6 +24,25 @@ function Login() {
       <Typography variant="h4" gutterBottom>
         Flood Management Login
       </Typography>
+
+      {isRegistering && (
+        <>
+          <TextField
+            label="Name"
+            fullWidth
+            margin="normal"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            label="Phone"
+            fullWidth
+            margin="normal"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </>
+      )}
 
       <TextField
         label="Email"
@@ -46,10 +65,20 @@ function Login() {
         variant="contained"
         color="primary"
         fullWidth
-        onClick={handleLogin}
+        onClick={isRegistering ? handleRegister : handleLogin}
         style={{ marginTop: '20px' }}
+        disabled={loading}
       >
-        Login
+        {isRegistering ? (loading ? 'Registering...' : 'Register') : (loading ? 'Logging in...' : 'Login')}
+      </Button>
+
+      <Button
+        color="secondary"
+        fullWidth
+        onClick={() => setIsRegistering(!isRegistering)}
+        style={{ marginTop: '12px' }}
+      >
+        {isRegistering ? 'Have an account? Login' : "Don't have an account? Register"}
       </Button>
 
       {/* Register Button */}

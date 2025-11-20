@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api"; // your backend URL
+const API_BASE_URL = "/api"; // use relative path and rely on react dev proxy
 
 // ---------------- FLOOD ALERT MOCK DATA ---------------- //
 let localAlerts = [
@@ -31,9 +31,9 @@ let localAlerts = [
 const simulateDelay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ✅ Flood Data APIs
-export const getFloodData = async () => {
+export const getFloodData = async (params = {}) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/floods`, { timeout: 2000 });
+    const response = await axios.get(`${API_BASE_URL}/floods`, { params, timeout: 2000 });
     return response.data;
   } catch (error) {
     console.warn("⚠️ Backend unreachable — using local mock data.");
@@ -184,4 +184,92 @@ export const addCommunityUpdate = async (data) => {
   localCommunity.push(newUpdate);
   localStorage.setItem("community", JSON.stringify(localCommunity));
   return newUpdate;
+};
+
+// ---------------- AUTH (backend-backed) ---------------- //
+export const registerUser = async (userData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/register`, userData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const loginUser = async (credentials) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/login`, credentials, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+// Force backend to fetch external alerts (immediate)
+export const refreshAlerts = async () => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/floods/refresh`, null, { timeout: 10000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Failed to refresh alerts:', err.message || err);
+    throw err;
+  }
+};
+
+// ✅ Donations APIs
+export const getDonations = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/donations`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Backend unreachable for donations.');
+    return [];
+  }
+};
+
+export const createDonation = async (donationData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/donations`, donationData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const updateDonation = async (id, donationData) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/donations/${id}`, donationData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+export const deleteDonation = async (id) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/donations/${id}`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
+};
+
+// ✅ Volunteers APIs
+export const getVolunteers = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/volunteers`, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    console.warn('⚠️ Backend unreachable for volunteers.');
+    return [];
+  }
+};
+
+export const createVolunteer = async (volunteerData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/volunteers`, volunteerData, { timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    throw err.response?.data || { message: err.message };
+  }
 };

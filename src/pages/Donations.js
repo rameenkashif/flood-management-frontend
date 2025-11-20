@@ -20,6 +20,7 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
+import { getDonations, createDonation } from "../services/api";
 
 // ---------------- MOCK DONATION DATA ----------------
 const mockDonations = [
@@ -87,9 +88,17 @@ const Donations = () => {
   });
 
   useEffect(() => {
-    // Fetch mock donations (simulate API)
-    setDonations(mockDonations);
+    const fetchDonations = async () => {
+      const data = await getDonations();
+      if (data && data.length > 0) {
+        setDonations(data);
+      } else {
+        setDonations(mockDonations);
+      }
+    };
+    fetchDonations();
   }, []);
+
 
   const handleFilterChange = (event) => {
     setFilteredType(event.target.value);
@@ -117,21 +126,25 @@ const Donations = () => {
     setNewDonation((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const id = Date.now();
-    setDonations((prev) => [...prev, { ...newDonation, id }]);
-    setNewDonation({
-      name: "",
-      contact: "",
-      type: "",
-      quantity: "",
-      estimatedValue: "",
-      targetRegion: "",
-      pickupLocation: "",
-      status: "In Transit",
-    });
-    handleClose();
+    try {
+      const data = await createDonation(newDonation);
+      setDonations((prev) => [...prev, data]);
+      setNewDonation({
+        name: "",
+        contact: "",
+        type: "",
+        quantity: "",
+        estimatedValue: "",
+        targetRegion: "",
+        pickupLocation: "",
+        status: "In Transit",
+      });
+      handleClose();
+    } catch (err) {
+      console.error("Error submitting donation:", err);
+    }
   };
 
   return (
@@ -209,7 +222,7 @@ const Donations = () => {
           </TableHead>
           <TableBody>
             {filteredDonations.map((donation) => (
-              <TableRow key={donation.id}>
+              <TableRow key={donation._id || donation.id}>
                 <TableCell>{donation.name}</TableCell>
                 <TableCell>{donation.contact}</TableCell>
                 <TableCell>{donation.type}</TableCell>
