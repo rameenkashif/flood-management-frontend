@@ -15,8 +15,10 @@ import ReliefCampCard from "../components/ReliefCampCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { getReliefCamps, addReliefCamp } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function ReliefCamps() {
+  const { user } = useAuth();
   const [camps, setCamps] = useState([]);
   const [filteredCamps, setFilteredCamps] = useState([]);
   const [open, setOpen] = useState(false);
@@ -86,15 +88,18 @@ function ReliefCamps() {
         <Typography variant="h4" fontWeight={600}>
           Relief Camps
         </Typography>
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          + Add New Camp
-        </Button>
+        {user?.role === 'admin' && (
+          <Button variant="contained" onClick={() => setOpen(true)} size="medium">
+            + Add New Camp
+          </Button>
+        )}
       </Box>
 
       {/* Search Bar */}
       <TextField
         placeholder="Search by camp name or region..."
         fullWidth
+        size="small"
         variant="outlined"
         value={searchTerm}
         onChange={handleSearch}
@@ -144,14 +149,14 @@ function ReliefCamps() {
       )}
 
       {/* Add Camp Modal */}
-      <Modal open={open} onClose={() => setOpen(false)}>
+      <Modal open={open && user?.role === 'admin'} onClose={() => setOpen(false)}>
         <Box
           sx={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 500,
+            width: 520,
             bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,

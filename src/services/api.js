@@ -68,6 +68,26 @@ export const filterAlerts = async (region, severity) => {
 // ---------------- ASSET LOCKER MOCK DATA ---------------- //
 let localAssets = JSON.parse(localStorage.getItem("assets") || "[]");
 
+// Helper to persist assets with quota handling: try saving, if quota exceeded remove photos and retry
+const persistAssets = (assets) => {
+  try {
+    localStorage.setItem("assets", JSON.stringify(assets));
+    return;
+  } catch (err) {
+    // if quota exceeded, remove photo fields and retry
+    try {
+      const stripped = assets.map(({ photo, ...rest }) => rest);
+      localStorage.setItem("assets", JSON.stringify(stripped));
+      // update in-memory copy to stripped so future reads match
+      localAssets = stripped;
+      return;
+    } catch (err2) {
+      // give up and throw original
+      throw err2;
+    }
+  }
+};
+
 // ✅ Get assets
 export const getAssets = async () => {
   await simulateDelay(200);
@@ -83,8 +103,27 @@ export const addAsset = async (assetData) => {
     dateRegistered: new Date().toLocaleDateString(),
   };
   localAssets.push(newAsset);
-  localStorage.setItem("assets", JSON.stringify(localAssets));
+  persistAssets(localAssets);
   return newAsset;
+};
+
+// Update an existing asset (by id)
+export const updateAsset = async (id, assetData) => {
+  await simulateDelay(150);
+  const idx = localAssets.findIndex((a) => a.id === id);
+  if (idx === -1) throw new Error('Asset not found');
+  localAssets[idx] = { ...localAssets[idx], ...assetData };
+  persistAssets(localAssets);
+  return localAssets[idx];
+};
+
+// Delete an asset by id
+export const deleteAsset = async (id) => {
+  await simulateDelay(150);
+  const before = localAssets.length;
+  localAssets = localAssets.filter((a) => a.id !== id);
+  persistAssets(localAssets);
+  return { deleted: before - localAssets.length };
 };
 
 // ✅ Calculate total asset value

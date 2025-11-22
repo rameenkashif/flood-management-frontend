@@ -15,10 +15,12 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getFloodData, createAlert, refreshAlerts } from "../services/api";
 import AlertCard from "../components/AlertCard";
+import { useAuth } from "../context/AuthContext";
 
 const severityOptions = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 function Alerts() {
+  const { user } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [filteredAlerts, setFilteredAlerts] = useState([]);
   const [regionFilter, setRegionFilter] = useState("");
@@ -132,6 +134,7 @@ function Alerts() {
         <div style={{ display: "flex", gap: "20px", width: "70%" }}>
           <TextField
             fullWidth
+            size="small"
             label="Filter by Region"
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
@@ -139,6 +142,7 @@ function Alerts() {
           <TextField
             select
             fullWidth
+            size="small"
             label="Filter by Severity"
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
@@ -152,6 +156,7 @@ function Alerts() {
           </TextField>
           <TextField
             select
+            size="small"
             sx={{ width: 160 }}
             label="View"
             value={viewFilter}
@@ -164,17 +169,20 @@ function Alerts() {
         </div>
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading}>
+          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading} size="medium" sx={{ height: 44 }}>
             Refresh External
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setOpen(true)}
-            sx={{ height: "55px" }}
-          >
-            + Create Alert
-          </Button>
+          {user?.role === 'admin' && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setOpen(true)}
+              size="medium"
+              sx={{ height: 44 }}
+            >
+              + Create Alert
+            </Button>
+          )}
         </div>
       </div>
 
@@ -229,8 +237,9 @@ function Alerts() {
         <Typography color="textSecondary">No alerts found.</Typography>
       )}
 
-      {/* Create Alert Dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+      {/* Create Alert Dialog (admin only) */}
+      {user?.role === 'admin' && (
+        <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>Create New Alert</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           <TextField
@@ -289,7 +298,8 @@ function Alerts() {
             Create
           </Button>
         </DialogActions>
-      </Dialog>
+        </Dialog>
+      )}
     </Container>
   );
 }

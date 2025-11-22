@@ -1,6 +1,7 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
+import EditIcon from '@mui/icons-material/Edit';
 
-function AssetCard({ asset }) {
+function AssetCard({ asset, onEdit, onSelect, selectable, selected }) {
   // ✅ Prevent crash if asset is undefined
   if (!asset) {
     return (
@@ -9,9 +10,8 @@ function AssetCard({ asset }) {
       </Card>
     );
   }
-
   return (
-    <Card sx={{ boxShadow: 3 }}>
+    <Card sx={{ boxShadow: 3, position: 'relative', border: selectable && selected ? '2px solid #1976d2' : undefined, cursor: selectable ? 'pointer' : 'default' }} onClick={() => { if (selectable && onSelect) onSelect(asset); }}>
       {asset.photo && (
         <img
           src={asset.photo}
@@ -21,6 +21,14 @@ function AssetCard({ asset }) {
           style={{ objectFit: "cover" }}
         />
       )}
+
+      {/* edit button top-right */}
+      {onEdit && (
+        <IconButton size="small" sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)' }} onClick={(e) => { e.stopPropagation(); onEdit(asset); }}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+      )}
+
       <CardContent>
         <Typography variant="h6" fontWeight="bold">
           {asset.name}

@@ -18,7 +18,9 @@ function Login() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      await login({ email, password });
+      // derive role from toggle or email fallback
+      const derivedRole = isAdmin ? 'admin' : (email === 'admin@gmail.com' ? 'admin' : 'user');
+      await login({ email, password, role: derivedRole });
       navigate('/dashboard');
     } catch (err) {
       alert(err.message || 'Login failed');
@@ -30,7 +32,8 @@ function Login() {
   const handleRegister = async () => {
     try {
       setLoading(true);
-      await register({ name, email, phone, password });
+      const derivedRole = isAdmin ? 'admin' : (email === 'admin@gmail.com' ? 'admin' : 'user');
+      await register({ name, email, phone, password, role: derivedRole });
       // after successful registration, navigate to dashboard
       navigate('/dashboard');
     } catch (err) {
