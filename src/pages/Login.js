@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Container, Typography } from '@mui/material';
+import { TextField, Button, Container, Typography, Switch, Box, Paper } from '@mui/material';
 
 function Login() {
   const { login, register } = useContext(AuthContext);
@@ -12,6 +12,7 @@ function Login() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -40,75 +41,118 @@ function Login() {
   };
 
   return (
-    <Container maxWidth="sm" style={{ marginTop: '100px', textAlign: 'center' }}>
-
-      {/* Logo Section */}
-      <img 
-        src="/floodguard-logo.png.png" 
-        alt="FloodGuard Logo"
-        style={{ width: '150px', marginBottom: '20px' }}
-      />
-
-      <Typography variant="h4" gutterBottom>
-        Flood Management Login
-      </Typography>
-
-      {isRegistering && (
-        <>
-          <TextField
-            label="Name"
-            fullWidth
-            margin="normal"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="Phone"
-            fullWidth
-            margin="normal"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </>
-      )}
-
-      <TextField
-        label="Email"
-        fullWidth
-        margin="normal"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <TextField
-        label="Password"
-        type="password"
-        fullWidth
-        margin="normal"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <Button
-        variant="contained"
-        color="primary"
-        fullWidth
-        onClick={isRegistering ? handleRegister : handleLogin}
-        style={{ marginTop: '20px' }}
-        disabled={loading}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundImage: `url('/login_bg.jpg')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 2,
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          width: '100%',
+          maxWidth: 420,
+          bgcolor: '#ffffff',
+          borderRadius: 3,
+          p: 4,
+          textAlign: 'center',
+        }}
       >
-        {isRegistering ? (loading ? 'Registering...' : 'Register') : (loading ? 'Logging in...' : 'Login')}
-      </Button>
+        <img
+          src="/floodguard-logo.png.png"
+          alt="FloodGuard Logo"
+          style={{ width: '120px', marginBottom: '12px' }}
+        />
 
-      <Button
-        color="secondary"
-        fullWidth
-        onClick={() => setIsRegistering(!isRegistering)}
-        style={{ marginTop: '12px' }}
-      >
-        {isRegistering ? 'Have an account? Login' : "Don't have an account? Register"}
-      </Button>
-    </Container>
+        <Typography variant="h5" gutterBottom>
+          Flood Management Login
+        </Typography>
+
+        <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
+          <Typography variant="body2" sx={{ mr: 1 }}>User</Typography>
+          <Switch
+            checked={isAdmin}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setIsAdmin(checked);
+              if (checked) setIsRegistering(false);
+            }}
+            color="primary"
+            inputProps={{ 'aria-label': 'user-admin-toggle' }}
+          />
+          <Typography variant="body2" sx={{ ml: 1 }}>Admin</Typography>
+        </Box>
+
+        {isRegistering && (
+          <>
+            <TextField
+              label="Name"
+              fullWidth
+              margin="normal"
+              size="small"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <TextField
+              label="Phone"
+              fullWidth
+              margin="normal"
+              size="small"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </>
+        )}
+
+        <TextField
+          label="Email"
+          fullWidth
+          margin="normal"
+          size="small"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <TextField
+          label="Password"
+          type="password"
+          fullWidth
+          margin="normal"
+          size="small"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          size="small"
+          onClick={isRegistering ? handleRegister : handleLogin}
+          sx={{ mt: 2 }}
+          disabled={loading}
+        >
+          {isRegistering ? (loading ? 'Registering...' : 'Register') : (loading ? 'Logging in...' : 'Login')}
+        </Button>
+
+        {!isAdmin && (
+          <Button
+            fullWidth
+            onClick={() => setIsRegistering(!isRegistering)}
+            sx={{ mt: 1, textTransform: 'none', color: '#00bcd4' }}
+            size="small"
+          >
+            {isRegistering ? 'Have an account? Login' : "Don't have account. Register"}
+          </Button>
+        )}
+      </Paper>
+    </Box>
   );
 }
 
