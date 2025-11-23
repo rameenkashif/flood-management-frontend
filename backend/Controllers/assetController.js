@@ -3,8 +3,7 @@ const Asset = require('../models/Asset');
 // Add new asset
 exports.addAsset = async (req, res) => {
   try {
-<<<<<<< HEAD
-    // Destructure only fields present in frontend and schema
+    // Dgiestructure only fields present in frontend and schema
     const { userId, type, name, description, value, location, photo } = req.body;
     const asset = await Asset.create({
       userId,
@@ -15,7 +14,6 @@ exports.addAsset = async (req, res) => {
       location,
       photo
     });
-=======
     const { userId, type, description, value, location } = req.body;
     // validate location against Pakistan cities list
     const path = require('path');
@@ -25,7 +23,6 @@ exports.addAsset = async (req, res) => {
     }
 
     const asset = await Asset.create({ userId, type, description, value, location });
->>>>>>> 05e78a24e2cac081fd83e44857535dc95066cc9b
     res.status(201).json(asset);
   } catch (error) {
     console.error('Error in addAsset:', error);
