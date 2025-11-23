@@ -20,7 +20,7 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
-import { getDonations, createDonation } from "../services/api";
+import { getDonations, createDonation, getPakistanCities } from "../services/api";
 
 // ---------------- MOCK DONATION DATA ----------------
 const mockDonations = [
@@ -87,6 +87,8 @@ const Donations = () => {
     status: "In Transit",
   });
 
+  const [cities, setCities] = useState([]);
+
   useEffect(() => {
     const fetchDonations = async () => {
       const data = await getDonations();
@@ -97,6 +99,18 @@ const Donations = () => {
       }
     };
     fetchDonations();
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (err) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
 
@@ -302,13 +316,26 @@ const Donations = () => {
             onChange={handleInputChange}
             required
           />
-          <TextField
-            label="Target Region"
-            name="targetRegion"
-            value={newDonation.targetRegion}
-            onChange={handleInputChange}
-            required
-          />
+          <FormControl required>
+            <InputLabel id="target-region-label">Target Region</InputLabel>
+            <Select
+              labelId="target-region-label"
+              name="targetRegion"
+              value={newDonation.targetRegion}
+              onChange={handleInputChange}
+              label="Target Region"
+            >
+              {cities && cities.length > 0 ? (
+                cities.map((city) => (
+                  <MenuItem key={city} value={city}>
+                    {city}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem value="">No cities available</MenuItem>
+              )}
+            </Select>
+          </FormControl>
           <TextField
             label="Pickup Location"
             name="pickupLocation"

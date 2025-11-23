@@ -9,11 +9,16 @@ import {
   TextField,
   Grid,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ReliefCampCard from "../components/ReliefCampCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { getReliefCamps, addReliefCamp, getPakistanCities } from "../services/api";
 import L from 'leaflet';
 
 // Fix leaflet's default icon paths (webpack doesn't copy them automatically)
@@ -42,6 +47,7 @@ function ReliefCamps() {
     coordinates: { lat: null, lng: null },
     facilities: [],
   });
+  const [cities, setCities] = useState([]);
 
   // Fetch camps from API (mock or backend)
   useEffect(() => {
@@ -49,6 +55,15 @@ function ReliefCamps() {
       setCamps(data);
       setFilteredCamps(data);
     });
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   // Handle adding new camp

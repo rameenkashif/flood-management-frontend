@@ -164,41 +164,91 @@ export const addReliefCamp = async (campData) => {
 let localCommunity = JSON.parse(localStorage.getItem("community") || "[]");
 
 export const getCommunityUpdates = async () => {
-  await new Promise((r) => setTimeout(r, 300));
-  if (localCommunity.length === 0) {
-    localCommunity = [
-      {
-        name: "NDMA Official",
-        region: "Karachi",
-        type: "Announcement",
-        priority: "High",
-        title: "Relief Camp Operations Extended",
-        message:
-          "All relief camps in Karachi will remain operational 24/7. Free transportation available from main intersections. Medical teams on standby.",
-        tags: "relief, transportation, medical",
-      },
-      {
-        name: "Muhammad Raza",
-        region: "Multan",
-        type: "Request",
-        priority: "Urgent",
-        title: "Urgent: Need Drinking Water in Sector 12",
-        message:
-          "Our area has been without clean drinking water for 48 hours. Approximately 500 families affected. Water tanker urgently needed.",
-        tags: "water, emergency, sector12",
-      },
-    ];
-    localStorage.setItem("community", JSON.stringify(localCommunity));
+  try {
+    const response = await axios.get(`${API_BASE_URL}/messages`, { timeout: 5000 });
+    // Map message model to community update shape used by UI
+    return response.data.map((m) => ({
+      id: m._id,
+      name: m.senderName || 'Anonymous',
+      region: m.region || '',
+      type: 'Update',
+      priority: 'Medium',
+      title: '',
+      message: m.message,
+      tags: '',
+      createdAt: m.createdAt,
+    }));
+  } catch (err) {
+    // fallback to localStorage mock
+    await new Promise((r) => setTimeout(r, 300));
+    if (localCommunity.length === 0) {
+      localCommunity = [
+        {
+          name: "NDMA Official",
+          region: "Karachi",
+          type: "Announcement",
+          priority: "High",
+          title: "Relief Camp Operations Extended",
+          message:
+            "All relief camps in Karachi will remain operational 24/7. Free transportation available from main intersections. Medical teams on standby.",
+          tags: "relief, transportation, medical",
+        },
+        {
+          name: "Muhammad Raza",
+          region: "Multan",
+          type: "Request",
+          priority: "Urgent",
+          title: "Urgent: Need Drinking Water in Sector 12",
+          message:
+            "Our area has been without clean drinking water for 48 hours. Approximately 500 families affected. Water tanker urgently needed.",
+          tags: "water, emergency, sector12",
+        },
+      ];
+      localStorage.setItem("community", JSON.stringify(localCommunity));
+    }
+    return localCommunity;
   }
-  return localCommunity;
 };
 
 export const addCommunityUpdate = async (data) => {
-  await new Promise((r) => setTimeout(r, 300));
-  const newUpdate = { ...data, id: Date.now() };
-  localCommunity.push(newUpdate);
-  localStorage.setItem("community", JSON.stringify(localCommunity));
-  return newUpdate;
+  try {
+    const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await axios.post(`${API_BASE_URL}/messages`, { message: data.message, recipientId: data.recipientId || null }, { headers, timeout: 5000 });
+    const m = response.data;
+    return {
+      id: m._id,
+      name: m.senderName || data.name || 'Anonymous',
+      region: data.region || '',
+      type: data.type || 'Update',
+      priority: data.priority || 'Medium',
+      title: data.title || '',
+      message: m.message,
+      tags: data.tags || '',
+      createdAt: m.createdAt,
+    };
+  } catch (err) {
+    // fallback to localStorage
+    await new Promise((r) => setTimeout(r, 300));
+    const newUpdate = { ...data, id: Date.now() };
+    localCommunity.push(newUpdate);
+    localStorage.setItem("community", JSON.stringify(localCommunity));
+    return newUpdate;
+  }
+};
+
+// ---------------- PAKISTAN CITIES ---------------- //
+export const getPakistanCities = async () => {
+  try {
+    const resp = await axios.get(`${API_BASE_URL}/locations/cities`, { timeout: 5000 });
+    return resp.data;
+  } catch (err) {
+    console.warn('⚠️ Failed to load cities from backend, using local fallback');
+    // local fallback subset
+    return [
+      'Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Hyderabad'
+    ];
+  }
 };
 
 // ---------------- AUTH (backend-backed) ---------------- //

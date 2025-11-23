@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from '../context/AuthContext';
 import {
   Box,
   Typography,
@@ -24,7 +25,7 @@ import {
   AlertTriangle,
   Plus,
 } from "lucide-react";
-import { getCommunityUpdates, addCommunityUpdate } from "../services/api";
+import { getCommunityUpdates, addCommunityUpdate, getPakistanCities } from "../services/api";
 
 function Community() {
   const [updates, setUpdates] = useState([]);
@@ -32,8 +33,10 @@ function Community() {
   const [filterType, setFilterType] = useState("All Types");
   const [filterPriority, setFilterPriority] = useState("All Priorities");
   const [openDialog, setOpenDialog] = useState(false);
+  const { user, isLoggedIn } = useAuth();
+
   const [newUpdate, setNewUpdate] = useState({
-    name: "",
+    name: user?.name || "",
     region: "",
     type: "Update",
     priority: "Medium",
@@ -41,9 +44,22 @@ function Community() {
     message: "",
     tags: "",
   });
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
     getCommunityUpdates().then(setUpdates);
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   const filteredUpdates = updates.filter((u) => {
@@ -56,11 +72,13 @@ function Community() {
   });
 
   const handlePost = async () => {
-    const newEntry = await addCommunityUpdate(newUpdate);
+    // prefer logged-in user's name
+    const payload = { ...newUpdate, name: user?.name || newUpdate.name };
+    const newEntry = await addCommunityUpdate(payload);
     setUpdates([...updates, newEntry]);
     setOpenDialog(false);
     setNewUpdate({
-      name: "",
+      name: user?.name || "",
       region: "",
       type: "Update",
       priority: "Medium",
@@ -122,9 +140,9 @@ function Community() {
               onChange={(e) => setFilterRegion(e.target.value)}
             >
               <MenuItem value="All Regions">All Regions</MenuItem>
-              {[...new Set(updates.map((u) => u.region))].map((r) => (
-                <MenuItem key={r} value={r}>
-                  {r}
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
                 </MenuItem>
               ))}
             </Select>
@@ -202,8 +220,8 @@ function Community() {
               {u.message}
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={1}>
-              <Chip label={u.type.toLowerCase()} />
-              <Chip label={`${u.priority.toLowerCase()} priority`} />
+              <Chip label={(u.type || 'Update').toLowerCase()} />
+              <Chip label={`${(u.priority || 'Medium').toLowerCase()} priority`} />
               <Chip label={u.region} />
               {u.tags &&
                 u.tags.split(",").map((t) => (
@@ -237,14 +255,23 @@ function Community() {
             margin="normal"
             value={newUpdate.name}
             onChange={(e) => setNewUpdate({ ...newUpdate, name: e.target.value })}
+            disabled={isLoggedIn}
           />
-          <TextField
-            fullWidth
-            label="Region"
-            margin="normal"
-            value={newUpdate.region}
-            onChange={(e) => setNewUpdate({ ...newUpdate, region: e.target.value })}
-          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={newUpdate.region}
+              label="Region"
+              onChange={(e) => setNewUpdate({ ...newUpdate, region: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Message Type</InputLabel>
             <Select

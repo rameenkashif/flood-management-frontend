@@ -4,6 +4,7 @@ const assetSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   type: { type: String, required: true }, // house, vehicle, jewelry
   description: { type: String },
+  location: { type: String },
   value: { type: Number, required: true },
   status: { type: String, enum: ['safe', 'lost', 'damaged'], default: 'safe' },
   compensationClaimed: { type: Boolean, default: false }

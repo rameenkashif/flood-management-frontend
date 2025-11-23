@@ -16,7 +16,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { getVolunteers, createVolunteer } from "../services/api";
+import { getVolunteers, createVolunteer, getPakistanCities } from "../services/api";
 
 function Volunteers() {
   const [open, setOpen] = useState(false);
@@ -28,6 +28,7 @@ function Volunteers() {
     skill: "",
     status: "Available",
   });
+  const [cities, setCities] = useState([]);
   const [skillFilter, setSkillFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -39,6 +40,18 @@ function Volunteers() {
       }
     };
     fetchVolunteers();
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (err) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   const handleOpen = () => setOpen(true);
@@ -170,13 +183,21 @@ function Volunteers() {
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
-          <TextField
-            fullWidth
-            label="Location"
-            margin="normal"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Location</InputLabel>
+            <Select
+              value={form.location}
+              label="Location"
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Skill</InputLabel>
             <Select
