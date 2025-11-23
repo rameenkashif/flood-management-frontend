@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Grid, Paper, Typography, Box } from '@mui/material';
 import FloodPredictionCard from '../components/FloodPredictionCard';
 import ReliefCampCard from '../components/ReliefCampCard';
 import VolunteerCard from '../components/VolunteerCard';
 import AssetCard from '../components/AssetCard';
 import Footer from '../components/Footer';
+import { getReliefCamps } from '../services/api';
 
 function Dashboard() {
+  const [camps, setCamps] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getReliefCamps()
+      .then((data) => {
+        if (!mounted) return;
+        if (!Array.isArray(data)) return setCamps([]);
+        // choose top 3 camps by totalCapacity (fallback to createdAt recent)
+        const sorted = [...data].sort((a, b) => {
+          const aCap = Number(a.totalCapacity ?? 0);
+          const bCap = Number(b.totalCapacity ?? 0);
+          if (aCap !== bCap) return bCap - aCap;
+          // fallback to newer first
+          const aTime = new Date(a.createdAt || 0).getTime();
+          const bTime = new Date(b.createdAt || 0).getTime();
+          return bTime - aTime;
+        });
+        setCamps(sorted.slice(0, 3));
+      })
+      .catch(() => setCamps([]));
+    return () => { mounted = false; };
+  }, []);
   // ✅ Sample asset data to prevent runtime crash
   const sampleAsset = {
     photo: "https://via.placeholder.com/400x200",
@@ -89,7 +113,16 @@ function Dashboard() {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <ReliefCampCard />
+            <Typography variant="h6" sx={{ mb: 1 }}>Top Relief Camps</Typography>
+            <Grid container spacing={2}>
+              {camps.length === 0 ? (
+                <Typography color="text.secondary">No camps available</Typography>
+              ) : (
+                camps.map((camp) => (
+                  <ReliefCampCard camp={camp} key={camp._id} />
+                ))
+              )}
+            </Grid>
           </Grid>
 
           <Grid item xs={12} md={6}>
