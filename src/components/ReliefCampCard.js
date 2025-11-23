@@ -1,71 +1,43 @@
-import { Card, CardContent, Typography, Grid, Box } from "@mui/material";
+import { Card, CardContent, Typography, Grid } from "@mui/material";
 
-const mockCamps = [
-  {
-    id: 1,
-    name: "City Central Relief Camp",
-    location: "Hyderabad",
-    region: "Sindh",
-    capacity: 300,
-    contactPerson: "Ali Khan",
-    phone: "+92 333 1234567",
-  },
-  {
-    id: 2,
-    name: "Coastal Shelter Camp",
-    location: "Karachi",
-    region: "Sindh",
-    capacity: 450,
-    contactPerson: "Sara Ahmed",
-    phone: "+92 322 9876543",
-  },
-  {
-    id: 3,
-    name: "North Valley Camp",
-    location: "Sukkur",
-    region: "Sindh",
-    capacity: 220,
-    contactPerson: "Bilal Qureshi",
-    phone: "+92 334 4567890",
-  },
-];
+function ReliefCampCard({ camp }) {
+  if (!camp) return null;
 
-function ReliefCampCard() {
+  const capacity = camp.totalCapacity ?? camp.capacity ?? 'N/A';
+  const contact = camp.contact ?? camp.contactPerson ?? '';
+  const location = camp.location ?? '';
+  const region = camp.region ?? '';
+  const facilities = Array.isArray(camp.facilities) ? camp.facilities.join(', ') : '';
+
   return (
-    <Box sx={{ marginTop: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        Existing Relief Camps
-      </Typography>
-
-      <Grid container spacing={2}>
-        {mockCamps.map((camp) => (
-          <Grid item xs={12} md={6} lg={4} key={camp.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 3, height: "100%" }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom color="primary">
-                  {camp.name}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>📍 Location:</strong> {camp.location}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>🌍 Region:</strong> {camp.region}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>🏕 Capacity:</strong> {camp.capacity} people
-                </Typography>
-                <Typography variant="body2">
-                  <strong>👤 Contact:</strong> {camp.contactPerson}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>📞 Phone:</strong> {camp.phone}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+    <Grid item xs={12} md={6} lg={4}>
+      <Card sx={{ borderRadius: 3, boxShadow: 3, height: "100%" }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom color="primary">
+            {camp.name}
+          </Typography>
+          <Typography variant="body2">
+            <strong>📍 Location:</strong> {location}
+          </Typography>
+          <Typography variant="body2">
+            <strong>🌍 Region:</strong> {region}
+          </Typography>
+          <Typography variant="body2">
+            <strong>🏕 Capacity:</strong> {capacity} people
+          </Typography>
+          {contact && (
+            <Typography variant="body2">
+              <strong>👤 Contact:</strong> {contact}
+            </Typography>
+          )}
+          {facilities && (
+            <Typography variant="body2">
+              <strong>🧰 Facilities:</strong> {facilities}
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+    </Grid>
   );
 }
 

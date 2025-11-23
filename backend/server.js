@@ -14,6 +14,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const volunteerRoutes = require('./routes/volunteers');
 const donationRoutes = require('./routes/donationRoutes');
+const reliefRoutes = require('./routes/reliefRoutes');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/agreements', agreementRoutes);
 app.use('/api/floods', floodRoutes);
+app.use('/api/relief-camps', reliefRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/locations', locationRoutes);
 

@@ -161,51 +161,27 @@ export const getAssetSummary = async () => {
   };
 };
 // ---------------- RELIEF CAMPS MOCK DATA ---------------- //
-let localCamps = JSON.parse(localStorage.getItem("reliefCamps") || "[]");
-
 export const getReliefCamps = async () => {
-  await new Promise((r) => setTimeout(r, 200));
-  return localCamps.length
-    ? localCamps
-    : [
-        {
-          name: "Central Relief Camp Karachi",
-          region: "Karachi",
-          location: "National Stadium Road, Karachi",
-          totalCapacity: 5000,
-          currentCapacity: 2800,
-          contact: "0321-1234567",
-          facilities: ["Food", "Water", "Medical", "Shelter"],
-          coordinates: { lat: 24.8607, lng: 67.0011 },
-        },
-        {
-          name: "Lahore City Relief Center",
-          region: "Lahore",
-          location: "Expo Center, Johar Town, Lahore",
-          totalCapacity: 3500,
-          currentCapacity: 1200,
-          contact: "0300-9876543",
-          facilities: ["Food", "Water", "Medical", "Shelter"],
-          coordinates: { lat: 31.5204, lng: 74.3587 },
-        },
-        {
-          name: "Hyderabad Safe Zone",
-          region: "Hyderabad",
-          location: "Civic Center, Latifabad, Hyderabad",
-          totalCapacity: 2000,
-          currentCapacity: 450,
-          contact: "0345-7778889",
-          facilities: ["Food", "Water", "Shelter"],
-          coordinates: { lat: 25.3960, lng: 68.3578 },
-        },
-      ];
+  try {
+    const response = await axios.get(`${API_BASE_URL}/relief-camps`, { timeout: 3000 });
+    // If an old localStorage cache exists from previous app versions, remove it
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('reliefCamps')) {
+        localStorage.removeItem('reliefCamps');
+      }
+    } catch (e) {
+      // ignore storage errors in environment without localStorage
+    }
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (err) {
+    console.warn('⚠️ Backend unreachable for relief camps — returning empty list.');
+    return [];
+  }
 };
 
 export const addReliefCamp = async (campData) => {
-  await new Promise((r) => setTimeout(r, 200));
-  localCamps.push(campData);
-  localStorage.setItem("reliefCamps", JSON.stringify(localCamps));
-  return campData;
+  const response = await axios.post(`${API_BASE_URL}/relief-camps`, campData, { timeout: 4000 });
+  return response.data;
 };
 
 // ---------------- COMMUNITY UPDATES MOCK DATA ---------------- //

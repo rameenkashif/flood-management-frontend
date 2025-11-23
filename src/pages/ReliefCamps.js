@@ -19,6 +19,16 @@ import ReliefCampCard from "../components/ReliefCampCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { getReliefCamps, addReliefCamp, getPakistanCities } from "../services/api";
+import L from 'leaflet';
+
+// Fix leaflet's default icon paths (webpack doesn't copy them automatically)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+import { getReliefCamps, addReliefCamp } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 function ReliefCamps() {
@@ -34,7 +44,7 @@ function ReliefCamps() {
     contact: "",
     totalCapacity: "",
     currentCapacity: 0,
-    coordinates: { lat: 24.8607, lng: 67.0011 },
+    coordinates: { lat: null, lng: null },
     facilities: [],
   });
   const [cities, setCities] = useState([]);
@@ -58,11 +68,68 @@ function ReliefCamps() {
 
   // Handle adding new camp
   const handleAddCamp = async () => {
-    await addReliefCamp(newCamp);
+    // ensure coordinates are numbers; if not, try to geocode the location
+    const coords = newCamp.coordinates || {};
+    if (typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+      if (newCamp.location && newCamp.location.trim()) {
+        await geocodeLocation();
+      }
+    }
+
+    const finalCoords = newCamp.coordinates || {};
+    if (typeof finalCoords.lat !== 'number' || typeof finalCoords.lng !== 'number') {
+      console.warn('Please provide valid coordinates or a recognized location to geocode');
+      return;
+    }
+
+    const payload = {
+      ...newCamp,
+      totalCapacity: Number(newCamp.totalCapacity) || 0,
+      currentCapacity: Number(newCamp.currentCapacity) || 0,
+      coordinates: { lat: Number(finalCoords.lat), lng: Number(finalCoords.lng) },
+    };
+
+    await addReliefCamp(payload);
     const updated = await getReliefCamps();
     setCamps(updated);
     setFilteredCamps(updated);
     setOpen(false);
+  };
+
+  // Try geocoding the location string via OpenStreetMap Nominatim
+  const geocodeLocation = async () => {
+    let q = newCamp.location;
+    if (!q || q.trim() === '') return;
+    q = q.trim();
+    // If user didn't include a country, bias to Pakistan to avoid ambiguous results
+    if (!/\b(pakistan|pk)\b/i.test(q)) {
+      q = `${q}, Pakistan`;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const results = await res.json();
+      if (Array.isArray(results) && results.length > 0) {
+        // If region provided, try to find a result that mentions the region
+        const regionLower = (newCamp.region || '').toLowerCase();
+        let r = results[0];
+        if (regionLower) {
+          const matched = results.find((item) => (item.display_name || '').toLowerCase().includes(regionLower));
+          if (matched) r = matched;
+        }
+        const lat = parseFloat(r.lat);
+        const lng = parseFloat(r.lon);
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+          setNewCamp((prev) => ({ ...prev, coordinates: { lat, lng } }));
+          return { lat, lng };
+        }
+      }
+    } catch (e) {
+      console.warn('Geocoding failed', e.message || e);
+    }
+    return null;
   };
 
   // Handle live search
@@ -136,13 +203,15 @@ function ReliefCamps() {
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {filteredCamps.map((camp, idx) => (
-            <Marker key={idx} position={[camp.coordinates.lat, camp.coordinates.lng]}>
+            (camp.coordinates && typeof camp.coordinates.lat === 'number' && typeof camp.coordinates.lng === 'number') ? (
+              <Marker key={idx} position={[camp.coordinates.lat, camp.coordinates.lng]}>
               <Popup>
                 <strong>{camp.name}</strong>
                 <br />
                 {camp.region}
               </Popup>
-            </Marker>
+              </Marker>
+            ) : null
           ))}
         </MapContainer>
       </Box>
@@ -153,13 +222,16 @@ function ReliefCamps() {
           No relief camps found matching “{searchTerm}”.
         </Typography>
       ) : (
-        <Grid container spacing={3}>
-          {filteredCamps.map((camp, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <ReliefCampCard camp={camp} />
-            </Grid>
-          ))}
-        </Grid>
+        <>
+          <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+            Existing Relief Camps
+          </Typography>
+          <Grid container spacing={3}>
+            {filteredCamps.map((camp, index) => (
+              <ReliefCampCard camp={camp} key={camp._id || index} />
+            ))}
+          </Grid>
+        </>
       )}
 
       {/* Add Camp Modal */}
@@ -187,32 +259,39 @@ function ReliefCamps() {
             value={newCamp.name}
             onChange={(e) => setNewCamp({ ...newCamp, name: e.target.value })}
           />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Region</InputLabel>
-            <Select
-              value={newCamp.region}
-              label="Region"
-              onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
-            >
-              <MenuItem value="">Select city</MenuItem>
-              {cities.map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Location</InputLabel>
-            <Select
-              value={newCamp.location}
-              label="Location"
-              onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
-            >
-              <MenuItem value="">Select city</MenuItem>
-              {cities.map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            fullWidth
+            label="Region"
+            sx={{ mb: 2 }}
+            value={newCamp.region}
+            onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Location"
+            sx={{ mb: 2 }}
+            value={newCamp.location}
+            onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
+          />
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+            <Button size="small" variant="outlined" onClick={geocodeLocation} sx={{ mr: 1 }}>
+              Auto geocode
+            </Button>
+            <TextField
+              label="Latitude"
+              size="small"
+              value={newCamp.coordinates?.lat ?? ''}
+              onChange={(e) => setNewCamp({ ...newCamp, coordinates: { ...(newCamp.coordinates||{}), lat: e.target.value ? parseFloat(e.target.value) : null } })}
+              sx={{ width: 160 }}
+            />
+            <TextField
+              label="Longitude"
+              size="small"
+              value={newCamp.coordinates?.lng ?? ''}
+              onChange={(e) => setNewCamp({ ...newCamp, coordinates: { ...(newCamp.coordinates||{}), lng: e.target.value ? parseFloat(e.target.value) : null } })}
+              sx={{ width: 160 }}
+            />
+          </Box>
           <TextField
             fullWidth
             label="Contact"
