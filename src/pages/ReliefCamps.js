@@ -28,7 +28,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
-import { getReliefCamps, addReliefCamp } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 function ReliefCamps() {
