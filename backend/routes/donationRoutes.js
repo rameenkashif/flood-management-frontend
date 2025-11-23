@@ -2,6 +2,8 @@ const express = require("express");
 const Donation = require("../models/Donation");
 
 const router = express.Router();
+const path = require('path');
+const PAK_CITIES = require(path.join(__dirname, '../data/pakistan_cities.json'));
 
 // GET all donations
 router.get("/", async (req, res) => {
@@ -16,6 +18,10 @@ router.get("/", async (req, res) => {
 // ADD a donation
 router.post("/", async (req, res) => {
   try {
+    // validate targetRegion
+    const region = req.body.targetRegion;
+    if (!region || !PAK_CITIES.includes(region)) return res.status(400).json({ message: 'Invalid targetRegion; must be a Pakistani city' });
+
     const donation = new Donation(req.body);
     await donation.save();
     res.status(201).json(donation);

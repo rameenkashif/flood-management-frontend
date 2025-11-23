@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Plus,
 } from "lucide-react";
-import { getCommunityUpdates, addCommunityUpdate } from "../services/api";
+import { getCommunityUpdates, addCommunityUpdate, getPakistanCities } from "../services/api";
 
 function Community() {
   const [updates, setUpdates] = useState([]);
@@ -44,9 +44,22 @@ function Community() {
     message: "",
     tags: "",
   });
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
     getCommunityUpdates().then(setUpdates);
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   const filteredUpdates = updates.filter((u) => {
@@ -127,9 +140,9 @@ function Community() {
               onChange={(e) => setFilterRegion(e.target.value)}
             >
               <MenuItem value="All Regions">All Regions</MenuItem>
-              {[...new Set(updates.map((u) => u.region))].map((r) => (
-                <MenuItem key={r} value={r}>
-                  {r}
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
                 </MenuItem>
               ))}
             </Select>
@@ -244,13 +257,21 @@ function Community() {
             onChange={(e) => setNewUpdate({ ...newUpdate, name: e.target.value })}
             disabled={isLoggedIn}
           />
-          <TextField
-            fullWidth
-            label="Region"
-            margin="normal"
-            value={newUpdate.region}
-            onChange={(e) => setNewUpdate({ ...newUpdate, region: e.target.value })}
-          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={newUpdate.region}
+              label="Region"
+              onChange={(e) => setNewUpdate({ ...newUpdate, region: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Message Type</InputLabel>
             <Select

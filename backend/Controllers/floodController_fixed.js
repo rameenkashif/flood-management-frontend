@@ -107,6 +107,10 @@ exports.createAlertHandler = async (req, res) => {
     const body = req.body;
     if (!body.source) body.source = "MANUAL";
 
+    // validate region
+    const cities = require('../data/pakistan_cities.json');
+    if (!body.region || !cities.includes(body.region)) return res.status(400).json({ message: 'Invalid region; must be a Pakistani city' });
+
     const alert = await exports.saveAlert(body);
 
     res.status(201).json(alert);

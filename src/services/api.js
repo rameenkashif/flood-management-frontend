@@ -261,6 +261,20 @@ export const addCommunityUpdate = async (data) => {
   }
 };
 
+// ---------------- PAKISTAN CITIES ---------------- //
+export const getPakistanCities = async () => {
+  try {
+    const resp = await axios.get(`${API_BASE_URL}/locations/cities`, { timeout: 5000 });
+    return resp.data;
+  } catch (err) {
+    console.warn('⚠️ Failed to load cities from backend, using local fallback');
+    // local fallback subset
+    return [
+      'Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Hyderabad'
+    ];
+  }
+};
+
 // ---------------- AUTH (backend-backed) ---------------- //
 export const registerUser = async (userData) => {
   try {

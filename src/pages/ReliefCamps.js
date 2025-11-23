@@ -9,12 +9,16 @@ import {
   TextField,
   Grid,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ReliefCampCard from "../components/ReliefCampCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { getReliefCamps, addReliefCamp } from "../services/api";
+import { getReliefCamps, addReliefCamp, getPakistanCities } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 function ReliefCamps() {
@@ -33,6 +37,7 @@ function ReliefCamps() {
     coordinates: { lat: 24.8607, lng: 67.0011 },
     facilities: [],
   });
+  const [cities, setCities] = useState([]);
 
   // Fetch camps from API (mock or backend)
   useEffect(() => {
@@ -40,6 +45,15 @@ function ReliefCamps() {
       setCamps(data);
       setFilteredCamps(data);
     });
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   // Handle adding new camp
@@ -173,20 +187,32 @@ function ReliefCamps() {
             value={newCamp.name}
             onChange={(e) => setNewCamp({ ...newCamp, name: e.target.value })}
           />
-          <TextField
-            fullWidth
-            label="Region"
-            sx={{ mb: 2 }}
-            value={newCamp.region}
-            onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            label="Location"
-            sx={{ mb: 2 }}
-            value={newCamp.location}
-            onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
-          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={newCamp.region}
+              label="Region"
+              onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Location</InputLabel>
+            <Select
+              value={newCamp.location}
+              label="Location"
+              onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             fullWidth
             label="Contact"

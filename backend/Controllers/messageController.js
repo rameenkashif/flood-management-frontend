@@ -21,9 +21,14 @@ exports.listMessages = async (req, res) => {
 exports.createMessage = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
-    const { recipientId = null, message } = req.body;
+    const { recipientId = null, message, region = null } = req.body;
     if (!message || !message.trim()) return res.status(400).json({ message: 'Message cannot be empty' });
-    const m = await Message.create({ senderId: req.user.id, senderName: req.user.name || 'Anonymous', recipientId: recipientId || null, message });
+    // optional region validation
+    if (region) {
+      const cities = require('../data/pakistan_cities.json');
+      if (!cities.includes(region)) return res.status(400).json({ message: 'Invalid region; must be a Pakistani city' });
+    }
+    const m = await Message.create({ senderId: req.user.id, senderName: req.user.name || 'Anonymous', recipientId: recipientId || null, message, region: region || null });
     res.status(201).json(m);
   } catch (err) {
     res.status(500).json({ message: err.message });

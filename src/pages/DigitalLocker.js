@@ -12,8 +12,11 @@ import {
   DialogContent,
   TextField,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
-import { getAssets, addAsset, getAssetSummary } from "../services/api";
+import { getAssets, addAsset, getAssetSummary, getPakistanCities } from "../services/api";
 import { updateAsset, deleteAsset } from "../services/api";
 import AssetCard from "../components/AssetCard";
 import AgreementView from "../components/AgreementView";
@@ -36,9 +39,22 @@ function DigitalLocker() {
     location: "",
     photo: "",
   });
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
     loadAssets();
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   const loadAssets = async () => {
@@ -187,7 +203,15 @@ function DigitalLocker() {
           <TextField label="Description" name="description" fullWidth multiline rows={2} margin="dense" onChange={handleChange} value={newAsset.description} />
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField label="Estimated Value (PKR)" name="value" margin="dense" onChange={handleChange} value={newAsset.value} fullWidth />
-            <TextField label="Location" name="location" margin="dense" onChange={handleChange} value={newAsset.location} fullWidth />
+            <FormControl fullWidth margin="dense">
+              <InputLabel>Location</InputLabel>
+              <Select name="location" value={newAsset.location} label="Location" onChange={handleChange}>
+                <MenuItem value="">Select city</MenuItem>
+                {cities.map((c) => (
+                  <MenuItem key={c} value={c}>{c}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
           <Button variant="outlined" component="label" sx={{ mt: 2 }}>
             Upload Photo
