@@ -1,21 +1,12 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  padding: 20px;
-  background-color: #f5f5f5;
+  padding: 0;
+  background-color: #f5f7fa;
 }
 
-input {
-  display: block;
-  margin: 10px 0;
-  padding: 8px;
-  width: 200px;
-}
-
-button {
-  padding: 8px 16px;
-  cursor: pointer;
-}
+/* Avoid generic input/button resets that conflict with MUI components */
+/* Use component-level props (size, sx) for spacing instead of global selectors */
 /* AlertCard.css
    Styles to match the screenshot look: rounded card, subtle border shadow,
    severity pill, three-column meta row, right-side alert icon.

@@ -69,6 +69,7 @@ export const filterAlerts = async (region, severity) => {
 // Clear old asset data from localStorage
 localStorage.removeItem("assets");
 
+<<<<<<< HEAD
 // Get assets for a user (requires userId and token)
 export const getAssets = async (userId) => {
   const token = localStorage.getItem('token');
@@ -76,10 +77,37 @@ export const getAssets = async (userId) => {
     headers: { Authorization: `Bearer ${token}` }
   });
   return response.data;
+=======
+// Helper to persist assets with quota handling: try saving, if quota exceeded remove photos and retry
+const persistAssets = (assets) => {
+  try {
+    localStorage.setItem("assets", JSON.stringify(assets));
+    return;
+  } catch (err) {
+    // if quota exceeded, remove photo fields and retry
+    try {
+      const stripped = assets.map(({ photo, ...rest }) => rest);
+      localStorage.setItem("assets", JSON.stringify(stripped));
+      // update in-memory copy to stripped so future reads match
+      localAssets = stripped;
+      return;
+    } catch (err2) {
+      // give up and throw original
+      throw err2;
+    }
+  }
+};
+
+// ✅ Get assets
+export const getAssets = async () => {
+  await simulateDelay(200);
+  return localAssets;
+>>>>>>> 05e78a24e2cac081fd83e44857535dc95066cc9b
 };
 
 // Add new asset (to backend, requires userId and token)
 export const addAsset = async (assetData) => {
+<<<<<<< HEAD
   const token = localStorage.getItem('token');
   const response = await axios.post(`/api/assets`, assetData, {
     headers: { Authorization: `Bearer ${token}` }
@@ -90,6 +118,41 @@ export const addAsset = async (assetData) => {
 // Calculate total asset value (from backend)
 export const getAssetSummary = async (userId) => {
   const assets = await getAssets(userId);
+=======
+  await simulateDelay(200);
+  const newAsset = {
+    id: Date.now(),
+    ...assetData,
+    dateRegistered: new Date().toLocaleDateString(),
+  };
+  localAssets.push(newAsset);
+  persistAssets(localAssets);
+  return newAsset;
+};
+
+// Update an existing asset (by id)
+export const updateAsset = async (id, assetData) => {
+  await simulateDelay(150);
+  const idx = localAssets.findIndex((a) => a.id === id);
+  if (idx === -1) throw new Error('Asset not found');
+  localAssets[idx] = { ...localAssets[idx], ...assetData };
+  persistAssets(localAssets);
+  return localAssets[idx];
+};
+
+// Delete an asset by id
+export const deleteAsset = async (id) => {
+  await simulateDelay(150);
+  const before = localAssets.length;
+  localAssets = localAssets.filter((a) => a.id !== id);
+  persistAssets(localAssets);
+  return { deleted: before - localAssets.length };
+};
+
+// ✅ Calculate total asset value
+export const getAssetSummary = async () => {
+  const assets = await getAssets();
+>>>>>>> 05e78a24e2cac081fd83e44857535dc95066cc9b
   const totalValue = assets.reduce((sum, asset) => sum + Number(asset.value || 0), 0);
   return {
     totalAssets: assets.length,
@@ -149,41 +212,91 @@ export const addReliefCamp = async (campData) => {
 let localCommunity = JSON.parse(localStorage.getItem("community") || "[]");
 
 export const getCommunityUpdates = async () => {
-  await new Promise((r) => setTimeout(r, 300));
-  if (localCommunity.length === 0) {
-    localCommunity = [
-      {
-        name: "NDMA Official",
-        region: "Karachi",
-        type: "Announcement",
-        priority: "High",
-        title: "Relief Camp Operations Extended",
-        message:
-          "All relief camps in Karachi will remain operational 24/7. Free transportation available from main intersections. Medical teams on standby.",
-        tags: "relief, transportation, medical",
-      },
-      {
-        name: "Muhammad Raza",
-        region: "Multan",
-        type: "Request",
-        priority: "Urgent",
-        title: "Urgent: Need Drinking Water in Sector 12",
-        message:
-          "Our area has been without clean drinking water for 48 hours. Approximately 500 families affected. Water tanker urgently needed.",
-        tags: "water, emergency, sector12",
-      },
-    ];
-    localStorage.setItem("community", JSON.stringify(localCommunity));
+  try {
+    const response = await axios.get(`${API_BASE_URL}/messages`, { timeout: 5000 });
+    // Map message model to community update shape used by UI
+    return response.data.map((m) => ({
+      id: m._id,
+      name: m.senderName || 'Anonymous',
+      region: m.region || '',
+      type: 'Update',
+      priority: 'Medium',
+      title: '',
+      message: m.message,
+      tags: '',
+      createdAt: m.createdAt,
+    }));
+  } catch (err) {
+    // fallback to localStorage mock
+    await new Promise((r) => setTimeout(r, 300));
+    if (localCommunity.length === 0) {
+      localCommunity = [
+        {
+          name: "NDMA Official",
+          region: "Karachi",
+          type: "Announcement",
+          priority: "High",
+          title: "Relief Camp Operations Extended",
+          message:
+            "All relief camps in Karachi will remain operational 24/7. Free transportation available from main intersections. Medical teams on standby.",
+          tags: "relief, transportation, medical",
+        },
+        {
+          name: "Muhammad Raza",
+          region: "Multan",
+          type: "Request",
+          priority: "Urgent",
+          title: "Urgent: Need Drinking Water in Sector 12",
+          message:
+            "Our area has been without clean drinking water for 48 hours. Approximately 500 families affected. Water tanker urgently needed.",
+          tags: "water, emergency, sector12",
+        },
+      ];
+      localStorage.setItem("community", JSON.stringify(localCommunity));
+    }
+    return localCommunity;
   }
-  return localCommunity;
 };
 
 export const addCommunityUpdate = async (data) => {
-  await new Promise((r) => setTimeout(r, 300));
-  const newUpdate = { ...data, id: Date.now() };
-  localCommunity.push(newUpdate);
-  localStorage.setItem("community", JSON.stringify(localCommunity));
-  return newUpdate;
+  try {
+    const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await axios.post(`${API_BASE_URL}/messages`, { message: data.message, recipientId: data.recipientId || null }, { headers, timeout: 5000 });
+    const m = response.data;
+    return {
+      id: m._id,
+      name: m.senderName || data.name || 'Anonymous',
+      region: data.region || '',
+      type: data.type || 'Update',
+      priority: data.priority || 'Medium',
+      title: data.title || '',
+      message: m.message,
+      tags: data.tags || '',
+      createdAt: m.createdAt,
+    };
+  } catch (err) {
+    // fallback to localStorage
+    await new Promise((r) => setTimeout(r, 300));
+    const newUpdate = { ...data, id: Date.now() };
+    localCommunity.push(newUpdate);
+    localStorage.setItem("community", JSON.stringify(localCommunity));
+    return newUpdate;
+  }
+};
+
+// ---------------- PAKISTAN CITIES ---------------- //
+export const getPakistanCities = async () => {
+  try {
+    const resp = await axios.get(`${API_BASE_URL}/locations/cities`, { timeout: 5000 });
+    return resp.data;
+  } catch (err) {
+    console.warn('⚠️ Failed to load cities from backend, using local fallback');
+    // local fallback subset
+    return [
+      'Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Hyderabad'
+    ];
+  }
 };
 
 // ---------------- AUTH (backend-backed) ---------------- //

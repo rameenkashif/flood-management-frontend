@@ -9,19 +9,25 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { getFloodData, createAlert, refreshAlerts } from "../services/api";
+import { getFloodData, createAlert, refreshAlerts, getPakistanCities } from "../services/api";
 import AlertCard from "../components/AlertCard";
+import { useAuth } from "../context/AuthContext";
 
 const severityOptions = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 function Alerts() {
+  const { user } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [filteredAlerts, setFilteredAlerts] = useState([]);
   const [regionFilter, setRegionFilter] = useState("");
+  const [cities, setCities] = useState([]);
   const [severityFilter, setSeverityFilter] = useState("");
   const [viewFilter, setViewFilter] = useState('active'); // active | previous | all
   const [open, setOpen] = useState(false);
@@ -49,6 +55,18 @@ function Alerts() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   const fetchData = async () => {
@@ -130,15 +148,23 @@ function Alerts() {
       {/* Filters + Create Button */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", gap: "20px", width: "70%" }}>
-          <TextField
-            fullWidth
-            label="Filter by Region"
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-          />
+          <FormControl fullWidth>
+            <InputLabel>Filter by Region</InputLabel>
+            <Select
+              value={regionFilter}
+              label="Filter by Region"
+              onChange={(e) => setRegionFilter(e.target.value)}
+            >
+              <MenuItem value="">All Regions</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             select
             fullWidth
+            size="small"
             label="Filter by Severity"
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
@@ -152,6 +178,7 @@ function Alerts() {
           </TextField>
           <TextField
             select
+            size="small"
             sx={{ width: 160 }}
             label="View"
             value={viewFilter}
@@ -164,17 +191,20 @@ function Alerts() {
         </div>
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading}>
+          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading} size="medium" sx={{ height: 44 }}>
             Refresh External
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setOpen(true)}
-            sx={{ height: "55px" }}
-          >
-            + Create Alert
-          </Button>
+          {user?.role === 'admin' && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setOpen(true)}
+              size="medium"
+              sx={{ height: 44 }}
+            >
+              + Create Alert
+            </Button>
+          )}
         </div>
       </div>
 
@@ -229,15 +259,24 @@ function Alerts() {
         <Typography color="textSecondary">No alerts found.</Typography>
       )}
 
-      {/* Create Alert Dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+      {/* Create Alert Dialog (admin only) */}
+      {user?.role === 'admin' && (
+        <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>Create New Alert</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <TextField
-            label="Region"
-            value={newAlert.region}
-            onChange={(e) => setNewAlert({ ...newAlert, region: e.target.value })}
-          />
+          <FormControl>
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={newAlert.region}
+              label="Region"
+              onChange={(e) => setNewAlert({ ...newAlert, region: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             select
             label="Severity"
@@ -289,7 +328,8 @@ function Alerts() {
             Create
           </Button>
         </DialogActions>
-      </Dialog>
+        </Dialog>
+      )}
     </Container>
   );
 }

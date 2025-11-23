@@ -9,14 +9,20 @@ import {
   TextField,
   Grid,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ReliefCampCard from "../components/ReliefCampCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { getReliefCamps, addReliefCamp } from "../services/api";
+import { getReliefCamps, addReliefCamp, getPakistanCities } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function ReliefCamps() {
+  const { user } = useAuth();
   const [camps, setCamps] = useState([]);
   const [filteredCamps, setFilteredCamps] = useState([]);
   const [open, setOpen] = useState(false);
@@ -31,6 +37,7 @@ function ReliefCamps() {
     coordinates: { lat: 24.8607, lng: 67.0011 },
     facilities: [],
   });
+  const [cities, setCities] = useState([]);
 
   // Fetch camps from API (mock or backend)
   useEffect(() => {
@@ -38,6 +45,15 @@ function ReliefCamps() {
       setCamps(data);
       setFilteredCamps(data);
     });
+    const loadCities = async () => {
+      try {
+        const list = await getPakistanCities();
+        setCities(list || []);
+      } catch (e) {
+        setCities([]);
+      }
+    };
+    loadCities();
   }, []);
 
   // Handle adding new camp
@@ -86,15 +102,18 @@ function ReliefCamps() {
         <Typography variant="h4" fontWeight={600}>
           Relief Camps
         </Typography>
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          + Add New Camp
-        </Button>
+        {user?.role === 'admin' && (
+          <Button variant="contained" onClick={() => setOpen(true)} size="medium">
+            + Add New Camp
+          </Button>
+        )}
       </Box>
 
       {/* Search Bar */}
       <TextField
         placeholder="Search by camp name or region..."
         fullWidth
+        size="small"
         variant="outlined"
         value={searchTerm}
         onChange={handleSearch}
@@ -144,14 +163,14 @@ function ReliefCamps() {
       )}
 
       {/* Add Camp Modal */}
-      <Modal open={open} onClose={() => setOpen(false)}>
+      <Modal open={open && user?.role === 'admin'} onClose={() => setOpen(false)}>
         <Box
           sx={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 500,
+            width: 520,
             bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,
@@ -168,20 +187,32 @@ function ReliefCamps() {
             value={newCamp.name}
             onChange={(e) => setNewCamp({ ...newCamp, name: e.target.value })}
           />
-          <TextField
-            fullWidth
-            label="Region"
-            sx={{ mb: 2 }}
-            value={newCamp.region}
-            onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            label="Location"
-            sx={{ mb: 2 }}
-            value={newCamp.location}
-            onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
-          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={newCamp.region}
+              label="Region"
+              onChange={(e) => setNewCamp({ ...newCamp, region: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Location</InputLabel>
+            <Select
+              value={newCamp.location}
+              label="Location"
+              onChange={(e) => setNewCamp({ ...newCamp, location: e.target.value })}
+            >
+              <MenuItem value="">Select city</MenuItem>
+              {cities.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             fullWidth
             label="Contact"

@@ -3,6 +3,7 @@ const Asset = require('../models/Asset');
 // Add new asset
 exports.addAsset = async (req, res) => {
   try {
+<<<<<<< HEAD
     // Destructure only fields present in frontend and schema
     const { userId, type, name, description, value, location, photo } = req.body;
     const asset = await Asset.create({
@@ -14,6 +15,17 @@ exports.addAsset = async (req, res) => {
       location,
       photo
     });
+=======
+    const { userId, type, description, value, location } = req.body;
+    // validate location against Pakistan cities list
+    const path = require('path');
+    const PAK_CITIES = require(path.join(__dirname, '../data/pakistan_cities.json'));
+    if (location && !PAK_CITIES.includes(location)) {
+      return res.status(400).json({ message: 'Invalid location; must be a Pakistani city' });
+    }
+
+    const asset = await Asset.create({ userId, type, description, value, location });
+>>>>>>> 05e78a24e2cac081fd83e44857535dc95066cc9b
     res.status(201).json(asset);
   } catch (error) {
     console.error('Error in addAsset:', error);
