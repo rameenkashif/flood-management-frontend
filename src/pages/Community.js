@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from '../context/AuthContext';
 import {
   Box,
   Typography,
@@ -32,8 +33,10 @@ function Community() {
   const [filterType, setFilterType] = useState("All Types");
   const [filterPriority, setFilterPriority] = useState("All Priorities");
   const [openDialog, setOpenDialog] = useState(false);
+  const { user, isLoggedIn } = useAuth();
+
   const [newUpdate, setNewUpdate] = useState({
-    name: "",
+    name: user?.name || "",
     region: "",
     type: "Update",
     priority: "Medium",
@@ -56,11 +59,13 @@ function Community() {
   });
 
   const handlePost = async () => {
-    const newEntry = await addCommunityUpdate(newUpdate);
+    // prefer logged-in user's name
+    const payload = { ...newUpdate, name: user?.name || newUpdate.name };
+    const newEntry = await addCommunityUpdate(payload);
     setUpdates([...updates, newEntry]);
     setOpenDialog(false);
     setNewUpdate({
-      name: "",
+      name: user?.name || "",
       region: "",
       type: "Update",
       priority: "Medium",
@@ -202,8 +207,8 @@ function Community() {
               {u.message}
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={1}>
-              <Chip label={u.type.toLowerCase()} />
-              <Chip label={`${u.priority.toLowerCase()} priority`} />
+              <Chip label={(u.type || 'Update').toLowerCase()} />
+              <Chip label={`${(u.priority || 'Medium').toLowerCase()} priority`} />
               <Chip label={u.region} />
               {u.tags &&
                 u.tags.split(",").map((t) => (
@@ -237,6 +242,7 @@ function Community() {
             margin="normal"
             value={newUpdate.name}
             onChange={(e) => setNewUpdate({ ...newUpdate, name: e.target.value })}
+            disabled={isLoggedIn}
           />
           <TextField
             fullWidth

@@ -10,6 +10,7 @@ const assetRoutes = require('./routes/assetRoutes');
 const agreementRoutes = require('./routes/agreementRoutes');
 const floodRoutes = require('./routes/floodRoutes');
 const floodController = require('./Controllers/floodController_fixed');
+const messageRoutes = require('./routes/messageRoutes');
 const volunteerRoutes = require('./routes/volunteers');
 const donationRoutes = require('./routes/donationRoutes');
 
@@ -25,6 +26,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/agreements', agreementRoutes);
 app.use('/api/floods', floodRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Test root route
 app.get('/', (req, res) => res.send('Flood Management Backend is running!'));
