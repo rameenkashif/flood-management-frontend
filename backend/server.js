@@ -19,7 +19,10 @@ const reliefRoutes = require('./routes/reliefRoutes');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// Increase body size limits to allow data-URL images sent from the frontend
+// Note: data URLs can be large — consider using multipart upload to avoid sending large base64 in JSON.
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Routes
 app.use('/api/donations', donationRoutes);

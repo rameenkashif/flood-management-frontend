@@ -65,74 +65,109 @@ export const filterAlerts = async (region, severity) => {
   });
 };
 
-// ---------------- ASSET LOCKER MOCK DATA ---------------- //
-let localAssets = JSON.parse(localStorage.getItem("assets") || "[]");
+// ---------------- ASSET APIs (backend-backed) ---------------- //
+// Note: assets endpoints are protected. We attach the token from localStorage when present.
+const authHeaders = () => {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
-// Helper to persist assets with quota handling: try saving, if quota exceeded remove photos and retry
-const persistAssets = (assets) => {
+// map backend asset document to UI-friendly shape
+const mapAssetFromServer = (a) => {
+  return {
+    id: a._id || a.id,
+    name: a.name,
+    type: a.type,
+    description: a.description,
+    // prefer value (legacy) then estimatedValue
+    value: a.value !== undefined && a.value !== null ? a.value : a.estimatedValue,
+    estimatedValue: a.estimatedValue,
+    currency: a.currency || 'PKR',
+    photo: a.photoUrl || a.photo || '',
+    photoUrl: a.photoUrl || a.photo || '',
+    location: a.location,
+    dateRegistered: a.createdAt || a.dateRegistered,
+    raw: a,
+  };
+};
+
+export const getAssets = async () => {
   try {
-    localStorage.setItem("assets", JSON.stringify(assets));
-    return;
+    const resp = await axios.get(`${API_BASE_URL}/assets/me`, { headers: authHeaders(), timeout: 5000 });
+    if (!Array.isArray(resp.data)) return [];
+    return resp.data.map(mapAssetFromServer);
   } catch (err) {
-    // if quota exceeded, remove photo fields and retry
-    try {
-      const stripped = assets.map(({ photo, ...rest }) => rest);
-      localStorage.setItem("assets", JSON.stringify(stripped));
-      // update in-memory copy to stripped so future reads match
-      localAssets = stripped;
-      return;
-    } catch (err2) {
-      // give up and throw original
-      throw err2;
-    }
+    console.warn('⚠️ Failed to load assets from backend — falling back to empty list', err.message || err);
+    return [];
   }
 };
 
-// ✅ Get assets
-export const getAssets = async () => {
-  await simulateDelay(200);
-  return localAssets;
-};
-
-// ✅ Add new asset
 export const addAsset = async (assetData) => {
-  await simulateDelay(200);
-  const newAsset = {
-    id: Date.now(),
-    ...assetData,
-    dateRegistered: new Date().toLocaleDateString(),
-  };
-  localAssets.push(newAsset);
-  persistAssets(localAssets);
-  return newAsset;
+  try {
+    // map UI shape to backend shape
+    const payload = {
+      type: assetData.type,
+      name: assetData.name,
+      description: assetData.description,
+      // send `value` (frontend input) as primary numeric field the backend validates
+      value: Number(assetData.value || assetData.estimatedValue || 0),
+      // also send estimatedValue for compatibility
+      estimatedValue: Number(assetData.estimatedValue || assetData.value || 0),
+      currency: assetData.currency || 'PKR',
+      // frontend stores resized image in `photo` (data URL) — backend accepts `photo` or `photoUrl`
+      photo: assetData.photo || assetData.photoUrl || '',
+      photoUrl: assetData.photoUrl || assetData.photo || '',
+      location: assetData.location || '',
+    };
+    const resp = await axios.post(`${API_BASE_URL}/assets`, payload, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
+    return mapAssetFromServer(resp.data);
+  } catch (err) {
+    console.error('Failed to add asset to backend:', err.response?.data || err.message || err);
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Failed to add asset';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+  }
 };
 
-// Update an existing asset (by id)
 export const updateAsset = async (id, assetData) => {
-  await simulateDelay(150);
-  const idx = localAssets.findIndex((a) => a.id === id);
-  if (idx === -1) throw new Error('Asset not found');
-  localAssets[idx] = { ...localAssets[idx], ...assetData };
-  persistAssets(localAssets);
-  return localAssets[idx];
+  try {
+    const payload = {
+      type: assetData.type,
+      name: assetData.name,
+      description: assetData.description,
+      value: Number(assetData.value || assetData.estimatedValue || 0),
+      estimatedValue: Number(assetData.estimatedValue || assetData.value || 0),
+      currency: assetData.currency || 'PKR',
+      photo: assetData.photo || assetData.photoUrl || '',
+      photoUrl: assetData.photoUrl || assetData.photo || '',
+      location: assetData.location || '',
+      value: Number(assetData.value || assetData.estimatedValue || 0),
+    };
+    const resp = await axios.patch(`${API_BASE_URL}/assets/${id}`, payload, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
+    return mapAssetFromServer(resp.data);
+  } catch (err) {
+    console.error('Failed to update asset:', err.response?.data || err.message || err);
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Failed to update asset';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+  }
 };
 
-// Delete an asset by id
 export const deleteAsset = async (id) => {
-  await simulateDelay(150);
-  const before = localAssets.length;
-  localAssets = localAssets.filter((a) => a.id !== id);
-  persistAssets(localAssets);
-  return { deleted: before - localAssets.length };
+  try {
+    const resp = await axios.delete(`${API_BASE_URL}/assets/${id}`, { headers: authHeaders(), timeout: 5000 });
+    return resp.data;
+  } catch (err) {
+    console.error('Failed to delete asset:', err.response?.data || err.message || err);
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Failed to delete asset';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+  }
 };
 
-// ✅ Calculate total asset value
 export const getAssetSummary = async () => {
   const assets = await getAssets();
   const totalValue = assets.reduce((sum, asset) => sum + Number(asset.value || 0), 0);
   return {
     totalAssets: assets.length,
-    protectedAssets: assets.length, // assuming all are protected
+    protectedAssets: assets.length,
     totalValue,
   };
 };
@@ -257,7 +292,8 @@ export const registerUser = async (userData) => {
     const response = await axios.post(`${API_BASE_URL}/users/register`, userData, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Registration failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -266,7 +302,8 @@ export const loginUser = async (credentials) => {
     const response = await axios.post(`${API_BASE_URL}/users/login`, credentials, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Login failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -277,7 +314,8 @@ export const refreshAlerts = async () => {
     return response.data;
   } catch (err) {
     console.warn('⚠️ Failed to refresh alerts:', err.message || err);
-    throw err;
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Failed to refresh alerts';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -297,7 +335,8 @@ export const createDonation = async (donationData) => {
     const response = await axios.post(`${API_BASE_URL}/donations`, donationData, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Create donation failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -306,7 +345,8 @@ export const updateDonation = async (id, donationData) => {
     const response = await axios.put(`${API_BASE_URL}/donations/${id}`, donationData, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Update donation failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -315,7 +355,8 @@ export const deleteDonation = async (id) => {
     const response = await axios.delete(`${API_BASE_URL}/donations/${id}`, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Delete donation failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
 
@@ -335,6 +376,7 @@ export const createVolunteer = async (volunteerData) => {
     const response = await axios.post(`${API_BASE_URL}/volunteers`, volunteerData, { timeout: 5000 });
     return response.data;
   } catch (err) {
-    throw err.response?.data || { message: err.message };
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Create volunteer failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };

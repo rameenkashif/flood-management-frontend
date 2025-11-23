@@ -104,10 +104,16 @@ function DigitalLocker() {
 
   const handleSubmit = async () => {
     if (!newAsset.name || !newAsset.value) return alert("Please fill all required fields.");
-    await addAsset(newAsset);
-    setOpen(false);
-    setNewAsset({ type: "Home/Property", name: "", description: "", value: "", location: "", photo: "" });
-    loadAssets();
+    try {
+      await addAsset(newAsset);
+      setOpen(false);
+      setNewAsset({ type: "Home/Property", name: "", description: "", value: "", location: "", photo: "" });
+      loadAssets();
+    } catch (err) {
+      console.error('Add asset failed:', err);
+      // err is now an Error in services/api.js; show its message
+      alert(err?.message || 'Failed to add asset');
+    }
   };
 
   return (

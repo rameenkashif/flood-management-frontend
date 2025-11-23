@@ -1,9 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { addAsset, getUserAssets, updateAssetStatus } = require('../Controllers/assetController');
+const protect = require('../middleware/authMiddleware');
+const { addAsset, getUserAssets, updateAssetStatus, getMyAssets } = require('../Controllers/assetController');
 
-router.post('/', addAsset);
-router.get('/:userId', getUserAssets);
-router.patch('/:assetId', updateAssetStatus);
+// create asset (authenticated)
+router.post('/', protect, addAsset);
+
+// get assets for authenticated user
+router.get('/me', protect, getMyAssets);
+
+// get assets by arbitrary userId (public)
+router.get('/user/:userId', getUserAssets);
+
+
+// update asset (authenticated - owner)
+router.patch('/:assetId', protect, updateAssetStatus);
+
+// delete asset (authenticated - owner)
+router.delete('/:assetId', protect, require('../Controllers/assetController').deleteAsset);
 
 module.exports = router;
