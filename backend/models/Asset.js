@@ -21,8 +21,7 @@ const assetSchema = new mongoose.Schema({
   // We accept both `photo` (data URL) and `photoUrl` (hosted URL) for compatibility.
   photo: { type: String },
   photoUrl: { type: String },
-  // Backwards-compatible field: keep existing `value` if other code relies on it
-  value: { type: Number },
+  // (no duplicate `value` field - primary `value` defined above)
   status: { type: String, enum: ['safe', 'lost', 'damaged'], default: 'safe' },
   compensationClaimed: { type: Boolean, default: false }
 }, { timestamps: true });
