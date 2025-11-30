@@ -17,9 +17,12 @@ import {
   MenuItem,
 } from "@mui/material";
 import { getVolunteers, createVolunteer, getPakistanCities } from "../services/api";
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 function Volunteers() {
   const [open, setOpen] = useState(false);
+  const authContext = useContext(AuthContext);
   const [volunteers, setVolunteers] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -67,10 +70,23 @@ function Volunteers() {
   };
 
   const handleSubmit = async () => {
-    if (form.name && form.phone && form.skill) {
+    // Require login; backend will derive name/phone from auth token
+    const { user } = authContext;
+    if (!user?.token) {
+      alert('Please login to register as a volunteer');
+      return;
+    }
+    if (form.skill) {
       try {
-        const data = await createVolunteer(form);
-        setVolunteers([...volunteers, data]);
+        const payload = {
+          location: form.location,
+          skill: form.skill,
+          status: form.status,
+        };
+        const data = await createVolunteer(payload);
+        // API returns { message, volunteer }
+        const vol = data?.volunteer || data;
+        setVolunteers([...volunteers, vol]);
         handleClose();
       } catch (err) {
         console.error("Error registering volunteer:", err);
@@ -91,8 +107,8 @@ function Volunteers() {
         <Typography variant="h4" fontWeight="bold">
           Volunteer Management
         </Typography>
-        <Button variant="contained" color="primary" onClick={handleOpen}>
-          + Register as Volunteer
+        <Button variant="contained" color="primary" onClick={handleOpen} disabled={!authContext?.user?.token}>
+          {authContext?.user?.token ? '+ Register as Volunteer' : 'Login to Register'}
         </Button>
       </Box>
 
@@ -169,20 +185,15 @@ function Volunteers() {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Register as Volunteer</DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Full Name"
-            margin="normal"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            label="Phone Number"
-            margin="normal"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
+          {/* Name/phone derived from authenticated user; not editable */}
+          {authContext?.user?.name ? (
+            <>
+              <Typography variant="body1">Registering as: <strong>{authContext.user.name}</strong></Typography>
+              <Typography variant="body2">Contact: {authContext.user.email || authContext.user.phone || 'N/A'}</Typography>
+            </>
+          ) : (
+            <Typography variant="body2">Please login to register as volunteer.</Typography>
+          )}
           <FormControl fullWidth margin="normal">
             <InputLabel>Location</InputLabel>
             <Select

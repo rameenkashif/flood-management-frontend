@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Container,
   Typography,
@@ -20,8 +20,10 @@ import { getAssets, addAsset, getAssetSummary, getPakistanCities } from "../serv
 import { updateAsset, deleteAsset } from "../services/api";
 import AssetCard from "../components/AssetCard";
 import AgreementView from "../components/AgreementView";
+import { AuthContext } from "../context/AuthContext";
 
 function DigitalLocker() {
+  const { user } = useContext(AuthContext);
   const [assets, setAssets] = useState([]);
   const [summary, setSummary] = useState({ totalAssets: 0, protectedAssets: 0, totalValue: 0 });
   const [open, setOpen] = useState(false);
@@ -104,6 +106,7 @@ function DigitalLocker() {
 
   const handleSubmit = async () => {
     if (!newAsset.name || !newAsset.value) return alert("Please fill all required fields.");
+    if (!user?.token) return alert("Please login to register an asset.");
     try {
       await addAsset(newAsset);
       setOpen(false);
@@ -164,7 +167,9 @@ function DigitalLocker() {
               </Button>
             </>
           )}
-          <Button variant="contained" onClick={() => setOpen(true)}>+ Register New Asset</Button>
+          <Button variant="contained" onClick={() => setOpen(true)} disabled={!user?.token}>
+            {user?.token ? '+ Register New Asset' : 'Login to Register Asset'}
+          </Button>
         </Box>
       </Box>
 

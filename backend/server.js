@@ -47,14 +47,17 @@ mongoose.connect(process.env.MONGO_URI)
 const User = require('./models/User');
 const ensureAdmin = async () => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const adminEmail = 'admin@gmail.com';
+    console.log(`🔍 Checking for admin user: ${adminEmail}`);
     const admin = await User.findOne({ email: adminEmail });
     if (!admin) {
-      const adminUser = new User({ name: 'admin', email: adminEmail, phone: '0000000000', password: process.env.ADMIN_PASSWORD || 'admin123', role: 'admin' });
+      // Create admin with credentials: admin@gmail.com / password123
+      console.log(`📝 Creating admin user...`);
+      const adminUser = new User({ name: 'admin', email: adminEmail, phone: '0000000000', password: 'password123', role: 'admin' });
       await adminUser.save();
-      console.log('✅ Default admin user created:', adminEmail);
+      console.log('✅ Default admin user created: admin@gmail.com / password123');
     } else {
-      console.log('ℹ️ Admin user already exists:', adminEmail);
+      console.log('ℹ️ Admin user already exists:', adminEmail, 'Role:', admin.role);
     }
   } catch (err) {
     console.warn('⚠️ Failed to ensure admin user:', err && err.message ? err.message : err);

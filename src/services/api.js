@@ -332,7 +332,7 @@ export const getDonations = async () => {
 
 export const createDonation = async (donationData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/donations`, donationData, { timeout: 5000 });
+    const response = await axios.post(`${API_BASE_URL}/donations`, donationData, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
     return response.data;
   } catch (err) {
     const message = err.response?.data?.message || err.response?.data || err.message || 'Create donation failed';
@@ -373,7 +373,7 @@ export const getVolunteers = async () => {
 
 export const createVolunteer = async (volunteerData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/volunteers`, volunteerData, { timeout: 5000 });
+    const response = await axios.post(`${API_BASE_URL}/volunteers`, volunteerData, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
     return response.data;
   } catch (err) {
     const message = err.response?.data?.message || err.response?.data || err.message || 'Create volunteer failed';

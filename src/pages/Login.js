@@ -12,15 +12,21 @@ function Login() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     try {
       setLoading(true);
-      // derive role from toggle or email fallback
-      const derivedRole = isAdmin ? 'admin' : (email === 'admin@gmail.com' ? 'admin' : 'user');
-      await login({ email, password, role: derivedRole });
+      // If admin mode is selected, only allow the known admin credentials
+      if (isAdminMode) {
+        if (email !== 'admin@gmail.com' || password !== 'password123') {
+          throw new Error('Only admin@gmail.com may login in Admin mode');
+        }
+      }
+
+      // Do not pass role to backend; let backend determine role from database
+      await login({ email, password });
       navigate('/dashboard');
     } catch (err) {
       alert(err.message || 'Login failed');
@@ -32,8 +38,11 @@ function Login() {
   const handleRegister = async () => {
     try {
       setLoading(true);
-      const derivedRole = isAdmin ? 'admin' : (email === 'admin@gmail.com' ? 'admin' : 'user');
-      await register({ name, email, phone, password, role: derivedRole });
+      // Prevent registering admin via UI
+      if (isAdminMode || email === 'admin' || email === 'admin@local' || email === 'admin@gmail.com') {
+        throw new Error('Admin account cannot be registered via UI');
+      }
+      await register({ name, email, phone, password });
       // after successful registration, navigate to dashboard
       navigate('/dashboard');
     } catch (err) {
@@ -80,10 +89,10 @@ function Login() {
         <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
           <Typography variant="body2" sx={{ mr: 1 }}>User</Typography>
           <Switch
-            checked={isAdmin}
+            checked={isAdminMode}
             onChange={(e) => {
               const checked = e.target.checked;
-              setIsAdmin(checked);
+              setIsAdminMode(checked);
               if (checked) setIsRegistering(false);
             }}
             color="primary"
@@ -144,7 +153,7 @@ function Login() {
           {isRegistering ? (loading ? 'Registering...' : 'Register') : (loading ? 'Logging in...' : 'Login')}
         </Button>
 
-        {!isAdmin && (
+        {!isAdminMode && (
           <Button
             fullWidth
             onClick={() => setIsRegistering(!isRegistering)}

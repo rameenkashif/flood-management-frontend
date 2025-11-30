@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Paper,
 } from "@mui/material";
 import { getDonations, createDonation, getPakistanCities } from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 // ---------------- MOCK DONATION DATA ----------------
 const mockDonations = [
@@ -87,6 +88,8 @@ const Donations = () => {
     status: "In Transit",
   });
 
+  const { user } = useContext(AuthContext);
+
   const [cities, setCities] = useState([]);
 
   useEffect(() => {
@@ -143,7 +146,16 @@ const Donations = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await createDonation(newDonation);
+      // backend will derive donor name/contact from auth token; send form fields only
+      const payload = {
+        type: newDonation.type,
+        quantity: Number(newDonation.quantity || 0),
+        estimatedValue: Number(newDonation.estimatedValue || 0),
+        targetRegion: newDonation.targetRegion,
+        pickupLocation: newDonation.pickupLocation,
+        status: newDonation.status,
+      };
+      const data = await createDonation(payload);
       setDonations((prev) => [...prev, data]);
       setNewDonation({
         name: "",
@@ -214,8 +226,8 @@ const Donations = () => {
             ))}
           </Select>
         </FormControl>
-        <Button variant="contained" color="primary" onClick={handleOpen}>
-          Make a Donation
+        <Button variant="contained" color="primary" onClick={handleOpen} disabled={!user?.token}>
+          {user?.token ? 'Make a Donation' : 'Login to Donate'}
         </Button>
       </Box>
 
@@ -272,20 +284,7 @@ const Donations = () => {
           }}
         >
           <Typography variant="h6">Make a Donation</Typography>
-          <TextField
-            label="Name"
-            name="name"
-            value={newDonation.name}
-            onChange={handleInputChange}
-            required
-          />
-          <TextField
-            label="Contact"
-            name="contact"
-            value={newDonation.contact}
-            onChange={handleInputChange}
-            required
-          />
+          {/* Donor identity is taken from authenticated user; no free-text name/contact allowed */}
           <FormControl required>
             <InputLabel>Donation Type</InputLabel>
             <Select

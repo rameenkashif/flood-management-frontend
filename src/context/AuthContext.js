@@ -12,8 +12,8 @@ export const AuthProvider = ({ children }) => {
     return { token: null, role: null, email: null, name: null };
   });
 
-  // Login via backend. Accepts optional `role` (client-side fallback).
-  const login = async ({ email, password, role: providedRole } = {}) => {
+  // Login via backend. Backend determines role based on user record.
+  const login = async ({ email, password } = {}) => {
     if (!email || !password) throw new Error('Email and password are required');
     // call backend
     let data;
@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }) => {
       throw err;
     }
 
-    // determine role: prefer backend value, then providedRole, then email-based fallback
-    const role = data?.role || providedRole || (email === 'admin@gmail.com' ? 'admin' : 'user');
+    // Role comes from backend only (no client-side role assignment)
+    const role = data?.role || 'user';
 
     const userData = { token: data.token, role, email: data.email || email, name: data.name };
     setUser(userData);
@@ -34,11 +34,11 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  // Register via backend. Accepts optional `role` param.
-  const register = async ({ name, email, phone, password, role: providedRole } = {}) => {
+  // Register via backend. Backend assigns role based on record (always 'user' for registration).
+  const register = async ({ name, email, phone, password } = {}) => {
     if (!email || !password || !name || !phone) throw new Error('All fields are required');
     const data = await registerUser({ name, email, phone, password });
-    const role = data?.role || providedRole || (email === 'admin@gmail.com' ? 'admin' : 'user');
+    const role = data?.role || 'user';
     const userData = { token: data.token, role, email: data.email || email, name: data.name };
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
