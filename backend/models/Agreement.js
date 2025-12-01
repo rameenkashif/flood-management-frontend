@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const agreementSchema = new mongoose.Schema({
   assetId: { type: mongoose.Schema.Types.ObjectId, ref: 'Asset', required: true },
   agreementText: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  signerName: { type: String },
   signedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 

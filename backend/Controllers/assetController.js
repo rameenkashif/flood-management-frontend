@@ -6,8 +6,11 @@ exports.addAsset = async (req, res) => {
     const { type, name, description, estimatedValue, currency, photoUrl, photo, value, location } = req.body;
     // allow authenticated users: prefer req.user.id when available
     const userId = req.user?.id || req.body.userId;
+    const userRole = req.user?.role;
     // Basic required fields
     if (!userId) return res.status(400).json({ message: 'userId is required' });
+    // Prevent admin from adding assets
+    if (userRole === 'admin') return res.status(403).json({ message: 'Admin users cannot create assets' });
     if (!type) return res.status(400).json({ message: 'type is required' });
     if (!name) return res.status(400).json({ message: 'name is required' });
     // the frontend uses `value` (Estimated Value input). accept `value` primarily.
@@ -51,6 +54,18 @@ exports.addAsset = async (req, res) => {
 exports.getUserAssets = async (req, res) => {
   try {
     const assets = await Asset.find({ userId: req.params.userId });
+    res.json(assets);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all assets (admin only)
+exports.getAllAssets = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    const assets = await Asset.find().sort({ createdAt: -1 }).populate({ path: 'userId', select: 'name email' });
     res.json(assets);
   } catch (error) {
     res.status(500).json({ message: error.message });

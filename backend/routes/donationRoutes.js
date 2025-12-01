@@ -7,10 +7,18 @@ const router = express.Router();
 const path = require('path');
 const PAK_CITIES = require(path.join(__dirname, '../data/pakistan_cities.json'));
 
-// GET all donations
-router.get("/", async (req, res) => {
+// GET donations - admin can see all, regular users see only their own
+router.get("/", protect, async (req, res) => {
   try {
-    const donations = await Donation.find();
+    if (req.user && req.user.role === 'admin') {
+      const donations = await Donation.find().populate('userId', 'name email phone');
+      return res.json(donations);
+    }
+
+    // regular users: show only their donations
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ message: 'Authentication required' });
+    const donations = await Donation.find({ userId });
     res.json(donations);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -28,12 +36,16 @@ router.post("/", protect, async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) return res.status(400).json({ message: 'User not found' });
+    
+    // Prevent admin from creating donations
+    if (user.role === 'admin') return res.status(403).json({ message: 'Admin users cannot create donations' });
 
     // build donation from request but override name/contact from user record
     const donationPayload = {
       ...req.body,
       name: user.name,
       contact: user.phone || user.email || '',
+      userId: userId,
     };
 
     const donation = new Donation(donationPayload);

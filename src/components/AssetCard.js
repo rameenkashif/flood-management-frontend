@@ -46,6 +46,11 @@ function AssetCard({ asset, onEdit, onSelect, selectable, selected }) {
           <Typography variant="body2">
             <strong>Location:</strong> {asset.location}
           </Typography>
+          {asset.raw && asset.raw.userId && (asset.raw.userId.name || asset.raw.userId.email) && (
+            <Typography variant="body2">
+              <strong>Owner:</strong> {asset.raw.userId.name || asset.raw.userId.email}
+            </Typography>
+          )}
           <Typography variant="caption" color="text.secondary">
             <strong>Registered on:</strong> {asset.dateRegistered}
           </Typography>

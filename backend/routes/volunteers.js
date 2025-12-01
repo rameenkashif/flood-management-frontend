@@ -20,6 +20,9 @@ router.post("/", protect, async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(400).json({ error: 'User not found' });
 
+    // Prevent admin from registering as volunteer
+    if (user.role === 'admin') return res.status(403).json({ error: 'Admin users cannot register as volunteers' });
+
     // Build volunteer record from body but override name/phone from user record
     const volunteerPayload = {
       ...req.body,

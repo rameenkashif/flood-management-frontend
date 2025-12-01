@@ -107,8 +107,8 @@ function Volunteers() {
         <Typography variant="h4" fontWeight="bold">
           Volunteer Management
         </Typography>
-        <Button variant="contained" color="primary" onClick={handleOpen} disabled={!authContext?.user?.token}>
-          {authContext?.user?.token ? '+ Register as Volunteer' : 'Login to Register'}
+        <Button variant="contained" color="primary" onClick={handleOpen} disabled={!authContext?.user?.token || authContext?.user?.role === 'admin'}>
+          {authContext?.user?.token ? (authContext?.user?.role === 'admin' ? 'Admin cannot register' : '+ Register as Volunteer') : 'Login to Register'}
         </Button>
       </Box>
 

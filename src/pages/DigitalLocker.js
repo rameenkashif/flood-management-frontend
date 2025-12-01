@@ -16,7 +16,7 @@ import {
   InputLabel,
   Select,
 } from "@mui/material";
-import { getAssets, addAsset, getAssetSummary, getPakistanCities } from "../services/api";
+import { getAssets, addAsset, getAssetSummary, getPakistanCities, getAllAssets } from "../services/api";
 import { updateAsset, deleteAsset } from "../services/api";
 import AssetCard from "../components/AssetCard";
 import AgreementView from "../components/AgreementView";
@@ -60,8 +60,21 @@ function DigitalLocker() {
   }, []);
 
   const loadAssets = async () => {
-    const data = await getAssets();
-    const summaryData = await getAssetSummary();
+    let data = [];
+    let summaryData = { totalAssets: 0, protectedAssets: 0, totalValue: 0 };
+    try {
+      if (user?.role === 'admin') {
+        data = await getAllAssets();
+        const totalValue = data.reduce((s, a) => s + Number(a.value || 0), 0);
+        summaryData = { totalAssets: data.length, protectedAssets: data.length, totalValue };
+      } else {
+        data = await getAssets();
+        summaryData = await getAssetSummary();
+      }
+    } catch (e) {
+      data = await getAssets();
+      summaryData = await getAssetSummary();
+    }
     setAssets(data);
     setSummary(summaryData);
   };
@@ -167,8 +180,8 @@ function DigitalLocker() {
               </Button>
             </>
           )}
-          <Button variant="contained" onClick={() => setOpen(true)} disabled={!user?.token}>
-            {user?.token ? '+ Register New Asset' : 'Login to Register Asset'}
+          <Button variant="contained" onClick={() => setOpen(true)} disabled={!user?.token || user?.role === 'admin'}>
+            {user?.token ? (user?.role === 'admin' ? 'Admin cannot register assets' : '+ Register New Asset') : 'Login to Register Asset'}
           </Button>
         </Box>
       </Box>
@@ -284,6 +297,7 @@ function DigitalLocker() {
           autoDownload={agreementAutoDownload}
           onClose={() => { setAgreementOpen(false); setAgreementAutoDownload(false); }}
           assets={assets}
+          user={user}
         />
       )}
     </Container>

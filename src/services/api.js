@@ -102,6 +102,17 @@ export const getAssets = async () => {
   }
 };
 
+export const getAllAssets = async () => {
+  try {
+    const resp = await axios.get(`${API_BASE_URL}/assets`, { headers: authHeaders(), timeout: 5000 });
+    if (!Array.isArray(resp.data)) return [];
+    return resp.data.map(mapAssetFromServer);
+  } catch (err) {
+    console.warn('⚠️ Failed to load all assets from backend — falling back to empty list', err.message || err);
+    return [];
+  }
+};
+
 export const addAsset = async (assetData) => {
   try {
     // map UI shape to backend shape
@@ -322,7 +333,7 @@ export const refreshAlerts = async () => {
 // ✅ Donations APIs
 export const getDonations = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/donations`, { timeout: 5000 });
+    const response = await axios.get(`${API_BASE_URL}/donations`, { headers: authHeaders(), timeout: 5000 });
     return response.data;
   } catch (err) {
     console.warn('⚠️ Backend unreachable for donations.');

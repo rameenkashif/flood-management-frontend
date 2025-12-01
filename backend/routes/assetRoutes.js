@@ -3,6 +3,9 @@ const router = express.Router();
 const protect = require('../middleware/authMiddleware');
 const { addAsset, getUserAssets, updateAssetStatus, getMyAssets } = require('../Controllers/assetController');
 
+// get all assets (admin)
+router.get('/', protect, require('../Controllers/assetController').getAllAssets);
+
 // create asset (authenticated)
 router.post('/', protect, addAsset);
 

@@ -23,53 +23,7 @@ import {
 import { getDonations, createDonation, getPakistanCities } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 
-// ---------------- MOCK DONATION DATA ----------------
-const mockDonations = [
-  {
-    id: 1,
-    name: "Ali Khan",
-    contact: "03001234567",
-    type: "Food",
-    quantity: 50,
-    estimatedValue: 5000,
-    targetRegion: "Hyderabad",
-    pickupLocation: "Warehouse 1",
-    status: "In Transit",
-  },
-  {
-    id: 2,
-    name: "Sara Ahmed",
-    contact: "03111234567",
-    type: "Medical Supplies",
-    quantity: 20,
-    estimatedValue: 12000,
-    targetRegion: "Karachi",
-    pickupLocation: "Warehouse 2",
-    status: "Delivered",
-  },
-  {
-    id: 3,
-    name: "Hassan Ali",
-    contact: "03221234567",
-    type: "Clothes",
-    quantity: 100,
-    estimatedValue: 15000,
-    targetRegion: "Lahore",
-    pickupLocation: "Warehouse 3",
-    status: "In Transit",
-  },
-  {
-    id: 4,
-    name: "Fatima Noor",
-    contact: "03331234567",
-    type: "Cash",
-    quantity: 1,
-    estimatedValue: 10000,
-    targetRegion: "Islamabad",
-    pickupLocation: "Bank Deposit",
-    status: "Delivered",
-  },
-];
+// Donations are fetched from the backend and scoped to the authenticated user (admin sees all)
 
 const donationTypes = ["All", "Food", "Clothes", "Medical Supplies", "Cash"];
 
@@ -94,15 +48,21 @@ const Donations = () => {
 
   useEffect(() => {
     const fetchDonations = async () => {
-      const data = await getDonations();
-      if (data && data.length > 0) {
-        setDonations(data);
-      } else {
-        setDonations(mockDonations);
+      // only fetch donations when user is logged in; admin will receive all from backend
+      if (!user?.token) {
+        setDonations([]);
+        return;
+      }
+      try {
+        const data = await getDonations();
+        setDonations(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to load donations:', err);
+        setDonations([]);
       }
     };
     fetchDonations();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const loadCities = async () => {
@@ -226,7 +186,13 @@ const Donations = () => {
             ))}
           </Select>
         </FormControl>
-        <Button variant="contained" color="primary" onClick={handleOpen} disabled={!user?.token}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpen}
+          disabled={!user?.token || user?.role === 'admin'}
+          sx={user?.role === 'admin' ? { filter: 'blur(1px)', opacity: 0.7, pointerEvents: 'none' } : {}}
+        >
           {user?.token ? 'Make a Donation' : 'Login to Donate'}
         </Button>
       </Box>
@@ -249,8 +215,8 @@ const Donations = () => {
           <TableBody>
             {filteredDonations.map((donation) => (
               <TableRow key={donation._id || donation.id}>
-                <TableCell>{donation.name}</TableCell>
-                <TableCell>{donation.contact}</TableCell>
+                <TableCell>{donation.name || (donation.userId && (donation.userId.name || donation.userId.email)) || 'Unknown'}</TableCell>
+                <TableCell>{donation.contact || (donation.userId && (donation.userId.phone || donation.userId.email)) || 'N/A'}</TableCell>
                 <TableCell>{donation.type}</TableCell>
                 <TableCell>{donation.quantity}</TableCell>
                 <TableCell>{donation.estimatedValue}</TableCell>
