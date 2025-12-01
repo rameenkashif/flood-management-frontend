@@ -147,35 +147,65 @@ exports.clearAlertsHandler = async (req, res) => {
 
 // ---------------- FETCH LIVE WEATHER FOR ALL PAKISTAN CITIES ----------------
 
-// Path to city.list.json.gz (downloaded from OpenWeather sample data)
-const CITY_LIST_PATH = path.join(__dirname, "../city.list.json.gz");
+// Load all cities from JSON and geocode if needed
+const allCityNames = require('../data/pakistan_cities.json');
+const cityCachePath = path.join(__dirname, '../data/city_coords_cache.json');
 
-async function getPakistanCities() {
-  if (!fs.existsSync(CITY_LIST_PATH)) {
-    throw new Error("city.list.json.gz not found. Download from OpenWeather");
+// Helper: Geocode city name to coordinates using OpenStreetMap Nominatim
+async function geocodeCity(cityName) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cityName + ', Pakistan')}`;
+  try {
+    const resp = await axios.get(url, { headers: { 'Accept-Language': 'en' }, timeout: 8000 });
+    const result = resp.data?.[0];
+    if (result && result.lat && result.lon) {
+      return { name: cityName, lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
+    }
+  } catch (err) {
+    console.warn(`Geocoding failed for ${cityName}:`, err.message);
   }
+  return null;
+}
 
-  const buffer = fs.readFileSync(CITY_LIST_PATH);
-  const decompressed = zlib.gunzipSync(buffer);
-  const allCities = JSON.parse(decompressed.toString());
-
-  // Filter all Pakistan cities
-  return allCities
-    .filter((c) => c.country === "PK")
-    .map((c) => ({ name: c.name, lat: c.coord.lat, lng: c.coord.lon }));
+// Helper: Load or build city coordinates cache
+async function getPakistanCities() {
+  let cache = {};
+  // Try to load cache from disk
+  if (fs.existsSync(cityCachePath)) {
+    try {
+      cache = JSON.parse(fs.readFileSync(cityCachePath, 'utf8'));
+    } catch (e) { cache = {}; }
+  }
+  const cities = [];
+  for (const name of allCityNames) {
+    if (cache[name]) {
+      cities.push({ name, lat: cache[name].lat, lng: cache[name].lng });
+      continue;
+    }
+    // Geocode if not cached
+    const geo = await geocodeCity(name);
+    if (geo) {
+      cities.push(geo);
+      cache[name] = { lat: geo.lat, lng: geo.lng };
+      // Save cache after each new geocode
+      fs.writeFileSync(cityCachePath, JSON.stringify(cache, null, 2));
+    }
+  }
+  return cities;
 }
 
 // Fetch external alerts
 exports.fetchExternalAlerts = async () => {
   const apiKey = process.env.OPENWEATHER_API_KEY;
-  if (!apiKey) {
-    console.error("Missing OPENWEATHER_API_KEY");
+  if (!apiKey || apiKey === 'your_api_key_here') {
+    console.warn('⚠️ OPENWEATHER_API_KEY is not set or is using placeholder. Skipping external alert fetch.');
     return [];
   }
 
+  console.log('🌐 Fetching weather data from OpenWeather API for Pakistani cities...');
   let cities = [];
   try {
     cities = await getPakistanCities();
+    console.log(`📍 Fetching weather for ${cities.length} Pakistan cities`);
   } catch (err) {
     console.error("Failed to load Pakistan cities:", err.message);
     return [];
@@ -208,11 +238,14 @@ exports.fetchExternalAlerts = async () => {
       await exports.autoDeactivateIfSubsided(city.name, rain, null);
 
       results.push(alertObj);
+      // Add small delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err) {
-      console.warn(`Failed to fetch weather for ${city.name}:`, err.message);
+      console.warn(`⚠️ Failed to fetch weather for ${city.name}:`, err.message);
     }
   }
 
+  console.log(`✅ Fetched ${results.length} weather alerts from OpenWeather`);
   await deactivateStaleAlerts(results);
   return results;
 };

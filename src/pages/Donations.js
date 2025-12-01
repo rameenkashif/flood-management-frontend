@@ -23,7 +23,53 @@ import {
 import { getDonations, createDonation, getPakistanCities } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 
-// Donations are fetched from the backend and scoped to the authenticated user (admin sees all)
+// ---------------- MOCK DONATION DATA ----------------
+const mockDonations = [
+  {
+    id: 1,
+    name: "Ali Khan",
+    contact: "03001234567",
+    type: "Food",
+    quantity: 50,
+    estimatedValue: 5000,
+    targetRegion: "Hyderabad",
+    pickupLocation: "Warehouse 1",
+    status: "In Transit",
+  },
+  {
+    id: 2,
+    name: "Sara Ahmed",
+    contact: "03111234567",
+    type: "Medical Supplies",
+    quantity: 20,
+    estimatedValue: 12000,
+    targetRegion: "Karachi",
+    pickupLocation: "Warehouse 2",
+    status: "Delivered",
+  },
+  {
+    id: 3,
+    name: "Hassan Ali",
+    contact: "03221234567",
+    type: "Clothes",
+    quantity: 100,
+    estimatedValue: 15000,
+    targetRegion: "Lahore",
+    pickupLocation: "Warehouse 3",
+    status: "In Transit",
+  },
+  {
+    id: 4,
+    name: "Fatima Noor",
+    contact: "03331234567",
+    type: "Cash",
+    quantity: 1,
+    estimatedValue: 10000,
+    targetRegion: "Islamabad",
+    pickupLocation: "Bank Deposit",
+    status: "Delivered",
+  },
+];
 
 const donationTypes = ["All", "Food", "Clothes", "Medical Supplies", "Cash"];
 

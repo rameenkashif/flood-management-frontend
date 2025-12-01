@@ -5,33 +5,51 @@ import ReliefCampCard from '../components/ReliefCampCard';
 import VolunteerCard from '../components/VolunteerCard';
 import AssetCard from '../components/AssetCard';
 import Footer from '../components/Footer';
-import { getReliefCamps } from '../services/api';
+import { getReliefCamps, getFloodData, getDonations, getVolunteers } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 function Dashboard() {
+  const { user } = useAuth();
+  const [alerts, setAlerts] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
   const [camps, setCamps] = useState([]);
 
   useEffect(() => {
     let mounted = true;
-    getReliefCamps()
-      .then((data) => {
-        if (!mounted) return;
-        if (!Array.isArray(data)) return setCamps([]);
-        // choose top 3 camps by totalCapacity (fallback to createdAt recent)
-        const sorted = [...data].sort((a, b) => {
-          const aCap = Number(a.totalCapacity ?? 0);
-          const bCap = Number(b.totalCapacity ?? 0);
-          if (aCap !== bCap) return bCap - aCap;
-          // fallback to newer first
-          const aTime = new Date(a.createdAt || 0).getTime();
-          const bTime = new Date(b.createdAt || 0).getTime();
-          return bTime - aTime;
-        });
-        setCamps(sorted.slice(0, 3));
-      })
-      .catch(() => setCamps([]));
+    // Fetch all summary data in parallel
+    Promise.all([
+      getFloodData({ active: true }),
+      getDonations(),
+      getVolunteers(),
+      getReliefCamps()
+    ]).then(([alertsData, donationsData, volunteersData, campsData]) => {
+      if (!mounted) return;
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
+      setDonations(Array.isArray(donationsData) ? donationsData : []);
+      setVolunteers(Array.isArray(volunteersData) ? volunteersData : []);
+      if (!Array.isArray(campsData)) return setCamps([]);
+      // choose top 3 camps by totalCapacity (fallback to createdAt recent)
+      const sorted = [...campsData].sort((a, b) => {
+        const aCap = Number(a.totalCapacity ?? 0);
+        const bCap = Number(b.totalCapacity ?? 0);
+        if (aCap !== bCap) return bCap - aCap;
+        // fallback to newer first
+        const aTime = new Date(a.createdAt || 0).getTime();
+        const bTime = new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+      setCamps(sorted.slice(0, 3));
+    }).catch(() => {
+      setAlerts([]);
+      setDonations([]);
+      setVolunteers([]);
+      setCamps([]);
+    });
     return () => { mounted = false; };
   }, []);
-  // ✅ Sample asset data to prevent runtime crash
+
+  // Asset preview (could fetch real assets if needed)
   const sampleAsset = {
     photo: "https://via.placeholder.com/400x200",
     name: "Rescue Boat",
@@ -57,35 +75,35 @@ function Dashboard() {
         }}
       >
         <Typography variant="h4" fontWeight="bold">
-          Welcome back, rameen kashif!
+          Welcome back, {user?.name || user?.email || 'User'}!
         </Typography>
         <Typography>
           Real-time flood monitoring and disaster response coordination
         </Typography>
       </Box>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - now live data */}
       <Container sx={{ mb: 5 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={3}>
             <Paper sx={{ p: 3, borderLeft: '5px solid red' }}>
-              <Typography variant="h5">5</Typography>
-              <Typography color="error">3 critical alerts</Typography>
+              <Typography variant="h5">{alerts.length}</Typography>
+              <Typography color="error">{alerts.filter(a => a.severity === 'CRITICAL').length} critical alerts</Typography>
               <Typography variant="body2">Active Alerts</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
             <Paper sx={{ p: 3, borderLeft: '5px solid blue' }}>
-              <Typography variant="h5">4</Typography>
-              <Typography color="primary">7150 spaces available</Typography>
+              <Typography variant="h5">{camps.length}</Typography>
+              <Typography color="primary">{camps.reduce((sum, c) => sum + Number(c.totalCapacity || 0), 0)} spaces available</Typography>
               <Typography variant="body2">Relief Camps</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
             <Paper sx={{ p: 3, borderLeft: '5px solid green' }}>
-              <Typography variant="h5">0</Typography>
+              <Typography variant="h5">{volunteers.length}</Typography>
               <Typography color="green">Ready to help</Typography>
               <Typography variant="body2">Volunteers</Typography>
             </Paper>
@@ -93,7 +111,7 @@ function Dashboard() {
 
           <Grid item xs={12} md={3}>
             <Paper sx={{ p: 3, borderLeft: '5px solid purple' }}>
-              <Typography variant="h5">3</Typography>
+              <Typography variant="h5">{donations.length}</Typography>
               <Typography color="secondary">Active offers</Typography>
               <Typography variant="body2">Donations</Typography>
             </Paper>

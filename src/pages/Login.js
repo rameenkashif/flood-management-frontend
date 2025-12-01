@@ -42,6 +42,11 @@ function Login() {
       if (isAdminMode || email === 'admin' || email === 'admin@local' || email === 'admin@gmail.com') {
         throw new Error('Admin account cannot be registered via UI');
       }
+      // Basic client-side validation: require Gmail and Pakistani mobile format
+      if (!name || name.trim().length < 2) throw new Error('Please enter your full name');
+      if (!email || !email.toLowerCase().endsWith('@gmail.com')) throw new Error('Please register with a valid Gmail address');
+      const phoneRegex = /^03\d{9}$/;
+      if (!phone || !phoneRegex.test(phone)) throw new Error('Please enter a valid Pakistani mobile number (e.g. 03001234567)');
       await register({ name, email, phone, password });
       // after successful registration, navigate to dashboard
       navigate('/dashboard');

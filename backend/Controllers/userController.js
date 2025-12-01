@@ -5,6 +5,14 @@ const jwt = require('jsonwebtoken');
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
+    // Basic validation: require Gmail and Pakistani mobile number format
+    if (!email || !email.toLowerCase().endsWith('@gmail.com')) {
+      return res.status(400).json({ message: 'Please register with a valid Gmail address' });
+    }
+    const phoneRegex = /^03\d{9}$/; // e.g. 03001234567
+    if (!phone || !phoneRegex.test(phone)) {
+      return res.status(400).json({ message: 'Please provide a valid Pakistani mobile number (e.g. 03001234567)' });
+    }
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: "User already exists" });
 
