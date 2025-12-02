@@ -56,8 +56,9 @@ export default function SplashScreen() {
   // Animate wave horizontally, then rise up
   useEffect(() => {
     let start;
-    const duration1 = 1200; // ms, horizontal fill
-    const duration2 = 1200; // ms, vertical rise
+    // increase both phases slightly so the whole animation is 1s slower
+    const duration1 = 1700; // ms, horizontal fill (was 1200)
+    const duration2 = 1700; // ms, vertical rise (was 1200)
     const totalRise = 900;
 
     function animateWave(ts) {
@@ -76,8 +77,10 @@ export default function SplashScreen() {
         setProgress(1);
         setRise(totalRise);
         setDrownLogo(true);
-        setTimeout(() => setFadeOut(true), 400);
-        setTimeout(() => navigate("/login"), 1100);
+        // add a small extra delay so users can soak in the final state before navigation
+        const extraDelay = 2000; // ms — increase splash by 2 seconds before navigating
+        setTimeout(() => setFadeOut(true), 400 + extraDelay);
+        setTimeout(() => navigate("/login"), 1100 + extraDelay);
       }
     }
     requestRef.current = requestAnimationFrame(animateWave);

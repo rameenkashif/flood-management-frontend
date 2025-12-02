@@ -3,10 +3,10 @@ import { Container, Grid, Paper, Typography, Box } from '@mui/material';
 import FloodPredictionCard from '../components/FloodPredictionCard';
 import ReliefCampCard from '../components/ReliefCampCard';
 import VolunteerCard from '../components/VolunteerCard';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Doughnut, Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 import Footer from '../components/Footer';
 import { getReliefCamps, getFloodData, getDonations, getVolunteers } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -219,7 +219,70 @@ function Dashboard() {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <VolunteerCard />
+            {/* Donations histogram: number of donations per category (type) */}
+            <Paper sx={{ borderRadius: 3, boxShadow: 3, height: 420 }}>
+              <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Donations by category</Typography>
+
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ width: '90%', height: '100%', maxWidth: 640 }}>
+                    {
+                      donations.length === 0 ? (
+                        <Typography color="text.secondary">No donations available</Typography>
+                      ) : (
+                        (() => {
+                          // group by donation.type
+                          const counts = donations.reduce((acc, d) => {
+                            const t = (d.type || 'Other').toString();
+                            acc[t] = (acc[t] || 0) + 1;
+                            return acc;
+                          }, {});
+                          const labels = Object.keys(counts).sort();
+                          const values = labels.map(l => counts[l]);
+
+                          const barColors = labels.map((_, idx) => {
+                            // alternate or pick from a small palette
+                              // preferred palette order: red, green, blue, orange, purple, yellow — repeats if needed
+                              const palette = ['#c62828', '#2e7d32', '#1976d2', '#ef6c00', '#6a1b9a', '#FFD54F'];
+                            return palette[idx % palette.length];
+                          });
+
+                          const dataBar = {
+                            labels,
+                            datasets: [
+                              {
+                                label: 'Donations',
+                                data: values,
+                                backgroundColor: barColors,
+                                borderColor: barColors.map(c => c),
+                                borderWidth: 1,
+                              }
+                            ]
+                          };
+
+                          return (
+                            <Bar
+                              data={dataBar}
+                              options={{
+                                maintainAspectRatio: false,
+                                scales: {
+                                  x: { grid: { display: false } },
+                                  y: { beginAtZero: true, ticks: { precision: 0 } }
+                                },
+                                plugins: {
+                                  legend: { display: false },
+                                  title: { display: false }
+                                }
+                              }}
+                            />
+                          );
+                        })()
+                      )
+                    }
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
           </Grid>
 
           {/* Volunteer deployment pie chart (Available / Deployed) */}
