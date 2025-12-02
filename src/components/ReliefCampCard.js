@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Grid } from "@mui/material";
+import { Card, CardContent, Typography } from "@mui/material";
 
 function ReliefCampCard({ camp }) {
   if (!camp) return null;
@@ -10,8 +10,7 @@ function ReliefCampCard({ camp }) {
   const facilities = Array.isArray(camp.facilities) ? camp.facilities.join(', ') : '';
 
   return (
-    <Grid item xs={12} md={6} lg={4}>
-      <Card sx={{ borderRadius: 3, boxShadow: 3, height: "100%" }}>
+    <Card sx={{ borderRadius: 3, boxShadow: 3, height: 420 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom color="primary">
             {camp.name}
@@ -37,7 +36,6 @@ function ReliefCampCard({ camp }) {
           )}
         </CardContent>
       </Card>
-    </Grid>
   );
 }
 

@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography } from '@mui/material';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -26,14 +26,16 @@ const data = { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ label
 
 
 function FloodPredictionCard() {
-return (
-<Card>
-<CardContent>
-<Typography variant="h5" gutterBottom>Flood Prediction & Alerts</Typography>
-<Line data={data} />
-</CardContent>
-</Card>
-);
+  return (
+    <Card sx={{ height: 420 }}>
+      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Typography variant="h5" gutterBottom>Flood Prediction & Alerts</Typography>
+        <Box sx={{ flex: 1 }}>
+          <Line data={data} />
+        </Box>
+      </CardContent>
+    </Card>
+  );
 }
 
 

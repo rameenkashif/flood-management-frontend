@@ -227,7 +227,9 @@ function ReliefCamps() {
           </Typography>
           <Grid container spacing={3}>
             {filteredCamps.map((camp, index) => (
-              <ReliefCampCard camp={camp} key={camp._id || index} />
+              <Grid item xs={12} md={6} lg={4} key={camp._id || index}>
+                <ReliefCampCard camp={camp} />
+              </Grid>
             ))}
           </Grid>
         </>

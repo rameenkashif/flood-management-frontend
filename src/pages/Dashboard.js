@@ -3,7 +3,10 @@ import { Container, Grid, Paper, Typography, Box } from '@mui/material';
 import FloodPredictionCard from '../components/FloodPredictionCard';
 import ReliefCampCard from '../components/ReliefCampCard';
 import VolunteerCard from '../components/VolunteerCard';
-import AssetCard from '../components/AssetCard';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 import Footer from '../components/Footer';
 import { getReliefCamps, getFloodData, getDonations, getVolunteers } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -49,16 +52,7 @@ function Dashboard() {
     return () => { mounted = false; };
   }, []);
 
-  // Asset preview (could fetch real assets if needed)
-  const sampleAsset = {
-    photo: "https://via.placeholder.com/400x200",
-    name: "Rescue Boat",
-    type: "Equipment",
-    description: "Used for flood area evacuations",
-    value: "250000",
-    location: "Islamabad",
-    dateRegistered: "2025-10-25",
-  };
+  // remove sample asset preview and render volunteers deployment chart instead
 
   return (
     <>
@@ -86,34 +80,86 @@ function Dashboard() {
       <Container sx={{ mb: 5 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, borderLeft: '5px solid red' }}>
-              <Typography variant="h5">{alerts.length}</Typography>
-              <Typography color="error">{alerts.filter(a => a.severity === 'CRITICAL').length} critical alerts</Typography>
-              <Typography variant="body2">Active Alerts</Typography>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                bgcolor: '#d32f2f',
+                color: 'white',
+                cursor: 'default',
+                transition: 'transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 18px 42px rgba(211,47,47,0.24)'
+                }
+              }}
+            >
+              <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{alerts.length}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{alerts.filter(a => a.severity === 'CRITICAL').length} critical alerts</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>Active Alerts</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, borderLeft: '5px solid blue' }}>
-              <Typography variant="h5">{camps.length}</Typography>
-              <Typography color="primary">{camps.reduce((sum, c) => sum + Number(c.totalCapacity || 0), 0)} spaces available</Typography>
-              <Typography variant="body2">Relief Camps</Typography>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                bgcolor: '#1565d8',
+                color: 'white',
+                cursor: 'default',
+                transition: 'transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 18px 42px rgba(21,101,216,0.24)'
+                }
+              }}
+            >
+              <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{camps.length}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{camps.reduce((sum, c) => sum + Number(c.totalCapacity || 0), 0)} spaces available</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>Relief Camps</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, borderLeft: '5px solid green' }}>
-              <Typography variant="h5">{volunteers.length}</Typography>
-              <Typography color="green">Ready to help</Typography>
-              <Typography variant="body2">Volunteers</Typography>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                bgcolor: '#2e7d32',
+                color: 'white',
+                cursor: 'default',
+                transition: 'transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 18px 42px rgba(46,125,50,0.24)'
+                }
+              }}
+            >
+              <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{volunteers.length}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>Ready to help</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>Volunteers</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, borderLeft: '5px solid purple' }}>
-              <Typography variant="h5">{donations.length}</Typography>
-              <Typography color="secondary">Active offers</Typography>
-              <Typography variant="body2">Donations</Typography>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                bgcolor: '#6a1b9a',
+                color: 'white',
+                cursor: 'default',
+                transition: 'transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 18px 42px rgba(106,27,154,0.24)'
+                }
+              }}
+            >
+              <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{donations.length}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>Active offers</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>Donations</Typography>
             </Paper>
           </Grid>
         </Grid>
@@ -121,9 +167,37 @@ function Dashboard() {
 
       {/* Chart & Map Section */}
       <Container>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2, mt: 3 }}>
-          Analytics & Monitoring
-        </Typography>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2, mt: 3, position: 'relative' }}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Analytics & Monitoring</Typography>
+          </Grid>
+          <Grid
+            item
+            xs={12}
+            md={6}
+            sx={{
+              textAlign: { xs: 'left', md: 'left' },
+              display: 'flex',
+              justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            }}
+          >
+            {/* position absolute on md+ so the left edge is exactly at 50% of the container */}
+            <Typography
+              className="top-relief-title"
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                position: { xs: 'static', md: 'absolute' },
+                left: { md: '50%' },
+                top: { md: '50%' },
+                transform: { md: 'translateX(0) translateY(-50%)' },
+                zIndex: { md: 2 },
+              }}
+            >
+              Top Relief Camps
+            </Typography>
+          </Grid>
+        </Grid>
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -131,13 +205,14 @@ function Dashboard() {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" sx={{ mb: 1 }}>Top Relief Camps</Typography>
             <Grid container spacing={2}>
               {camps.length === 0 ? (
                 <Typography color="text.secondary">No camps available</Typography>
               ) : (
                 camps.map((camp) => (
-                  <ReliefCampCard camp={camp} key={camp._id} />
+                  <Grid item xs={12} md={6} lg={4} key={camp._id}>
+                    <ReliefCampCard camp={camp} />
+                  </Grid>
                 ))
               )}
             </Grid>
@@ -147,9 +222,47 @@ function Dashboard() {
             <VolunteerCard />
           </Grid>
 
-          {/* ✅ Fixed AssetCard - now safely receives asset data */}
+          {/* Volunteer deployment pie chart (Available / Deployed) */}
           <Grid item xs={12} md={6}>
-            <AssetCard asset={sampleAsset} />
+            <Paper sx={{ borderRadius: 3, boxShadow: 3, height: 420 }}>
+              <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Volunteer deployment</Typography>
+
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* chart container controls size for responsive Doughnut */}
+                  <Box sx={{ width: '80%', maxWidth: 360, height: 260 }}>
+                    <Doughnut
+                      data={{
+                        labels: ['Available', 'Deployed'],
+                        datasets: [{
+                          data: [volunteers.filter(v => (v.status || '').toLowerCase() === 'available').length, volunteers.filter(v => (v.status || '').toLowerCase() === 'deployed').length],
+                          backgroundColor: ['#FFD54F', '#0D47A1'],
+                          hoverBackgroundColor: ['#FFEB3B', '#0B3B91'],
+                          borderWidth: 2,
+                        }]
+                      }}
+                      options={{
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } }
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, bgcolor: '#FFD54F', borderRadius: '2px' }} />
+                    <Typography variant="body2">Available</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, bgcolor: '#0D47A1', borderRadius: '2px' }} />
+                    <Typography variant="body2">Deployed</Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
           </Grid>
         </Grid>
       </Container>
