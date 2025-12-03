@@ -353,7 +353,7 @@ export const createDonation = async (donationData) => {
 
 export const updateDonation = async (id, donationData) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/donations/${id}`, donationData, { timeout: 5000 });
+    const response = await axios.put(`${API_BASE_URL}/donations/${id}`, donationData, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
     return response.data;
   } catch (err) {
     const message = err.response?.data?.message || err.response?.data || err.message || 'Update donation failed';

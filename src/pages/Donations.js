@@ -20,7 +20,7 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
-import { getDonations, createDonation, getPakistanCities } from "../services/api";
+import { getDonations, createDonation, getPakistanCities, updateDonation } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 
 // ---------------- MOCK DONATION DATA ----------------
@@ -179,6 +179,26 @@ const Donations = () => {
     }
   };
 
+  const [updatingId, setUpdatingId] = useState(null);
+
+  const handleChangeStatus = async (donation, newStatus) => {
+    const id = donation._id || donation.id;
+    setUpdatingId(id);
+    try {
+      const updated = await updateDonation(id, { status: newStatus });
+      // reflect change in local state (backend may return updated doc)
+      setDonations((prev) =>
+        prev.map((d) =>
+          (d._id === id || d.id === id) ? { ...d, status: updated.status || newStatus } : d
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update donation status:', err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" fontWeight={600}>
@@ -255,7 +275,8 @@ const Donations = () => {
               <TableCell>Estimated Value</TableCell>
               <TableCell>Target Region</TableCell>
               <TableCell>Pickup Location</TableCell>
-              <TableCell>Status</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -269,6 +290,22 @@ const Donations = () => {
                 <TableCell>{donation.targetRegion}</TableCell>
                 <TableCell>{donation.pickupLocation}</TableCell>
                 <TableCell>{donation.status}</TableCell>
+                <TableCell>
+                  {user?.role === 'admin' ? (
+                    donation.status === 'In Transit' ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleChangeStatus(donation, 'Delivered')}
+                        disabled={updatingId === (donation._id || donation.id)}
+                      >
+                        {updatingId === (donation._id || donation.id) ? 'Updating...' : 'Mark Delivered'}
+                      </Button>
+                    ) : (
+                      <Typography variant="body2">—</Typography>
+                    )
+                  ) : null}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

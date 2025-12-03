@@ -56,14 +56,27 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// UPDATE donation status
-router.put("/:id", async (req, res) => {
+// UPDATE donation status (admin only)
+router.put("/:id", protect, async (req, res) => {
   try {
+    // only admin may change donation status
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin role required to update donation status' });
+    }
+
+    const { status } = req.body;
+    const allowed = ['In Transit', 'Delivered'];
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ message: `Invalid status. Allowed values: ${allowed.join(', ')}` });
+    }
+
     const updated = await Donation.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { status },
       { new: true }
     );
+
+    if (!updated) return res.status(404).json({ message: 'Donation not found' });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message });
