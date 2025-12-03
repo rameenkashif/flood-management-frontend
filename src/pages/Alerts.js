@@ -30,20 +30,8 @@ function Alerts() {
   const [cities, setCities] = useState([]);
   const [severityFilter, setSeverityFilter] = useState("");
   const [viewFilter, setViewFilter] = useState('active'); // active | previous | all
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const pollingRef = useRef(null);
-
-  const [newAlert, setNewAlert] = useState({
-    region: "",
-    severity: "",
-    rainfall: "",
-    waterLevel: "",
-    affected: "",
-    message: "",
-    lat: "",
-    lng: "",
-  });
 
   useEffect(() => {
     fetchData();
@@ -103,26 +91,6 @@ function Alerts() {
     fetchData();
   }, [viewFilter]);
 
-  const handleCreateAlert = async () => {
-    try {
-      setLoading(true);
-      await createAlert({
-        ...newAlert,
-        rainfall: Number(newAlert.rainfall) || 0,
-        waterLevel: Number(newAlert.waterLevel) || 0,
-        affectedPopulation: Number(newAlert.affected) || 0,
-        lat: Number(newAlert.lat) || 0,
-        lng: Number(newAlert.lng) || 0,
-      });
-      setOpen(false);
-      await fetchData();
-    } catch (err) {
-      alert('Failed to create alert');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleRefreshExternal = async () => {
     try {
       setLoading(true);
@@ -145,28 +113,26 @@ function Alerts() {
         Real-time flood warnings and predictions
       </Typography>
 
-      {/* Filters + Create Button */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: "20px", width: "70%" }}>
-          <FormControl fullWidth>
-            <InputLabel>Filter by Region</InputLabel>
-            <Select
-              value={regionFilter}
-              label="Filter by Region"
-              onChange={(e) => setRegionFilter(e.target.value)}
-            >
-              <MenuItem value="">All Regions</MenuItem>
-              {cities.map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            select
-            fullWidth
-            size="small"
-            label="Filter by Severity"
+      {/* Filters + Refresh Button */}
+      <div style={{ display: "flex", gap: "16px", marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <FormControl sx={{ minWidth: 220, height: 56 }}>
+          <InputLabel>Filter by Region</InputLabel>
+          <Select
+            value={regionFilter}
+            label="Filter by Region"
+            onChange={(e) => setRegionFilter(e.target.value)}
+          >
+            <MenuItem value="">All Regions</MenuItem>
+            {cities.map((c) => (
+              <MenuItem key={c} value={c}>{c}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 200, height: 56 }}>
+          <InputLabel>Filter by Severity</InputLabel>
+          <Select
             value={severityFilter}
+            label="Filter by Severity"
             onChange={(e) => setSeverityFilter(e.target.value)}
           >
             <MenuItem value="">All Severities</MenuItem>
@@ -175,37 +141,23 @@ function Alerts() {
                 {s}
               </MenuItem>
             ))}
-          </TextField>
-          <TextField
-            select
-            size="small"
-            sx={{ width: 160 }}
-            label="View"
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 160, height: 56 }}>
+          <InputLabel>View</InputLabel>
+          <Select
             value={viewFilter}
+            label="View"
             onChange={(e) => setViewFilter(e.target.value)}
           >
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="previous">Previous</MenuItem>
             <MenuItem value="all">All</MenuItem>
-          </TextField>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading} size="medium" sx={{ height: 44 }}>
-            Refresh External
-          </Button>
-          {user?.role === 'admin' && (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setOpen(true)}
-              size="medium"
-              sx={{ height: 44 }}
-            >
-              + Create Alert
-            </Button>
-          )}
-        </div>
+          </Select>
+        </FormControl>
+        <Button variant="outlined" onClick={handleRefreshExternal} disabled={loading} size="medium" sx={{ height: 56, whiteSpace: 'nowrap' }}>
+          Refresh External
+        </Button>
       </div>
 
       {/* Map */}
@@ -259,77 +211,7 @@ function Alerts() {
         <Typography color="textSecondary">No alerts found.</Typography>
       )}
 
-      {/* Create Alert Dialog (admin only) */}
-      {user?.role === 'admin' && (
-        <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
-        <DialogTitle>Create New Alert</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <FormControl>
-            <InputLabel>Region</InputLabel>
-            <Select
-              value={newAlert.region}
-              label="Region"
-              onChange={(e) => setNewAlert({ ...newAlert, region: e.target.value })}
-            >
-              <MenuItem value="">Select city</MenuItem>
-              {cities.map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            select
-            label="Severity"
-            value={newAlert.severity}
-            onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value })}
-          >
-            {severityOptions.map((s) => (
-              <MenuItem key={s} value={s}>
-                {s}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="Rainfall (mm)"
-            value={newAlert.rainfall}
-            onChange={(e) => setNewAlert({ ...newAlert, rainfall: e.target.value })}
-          />
-          <TextField
-            label="Water Level (m)"
-            value={newAlert.waterLevel}
-            onChange={(e) => setNewAlert({ ...newAlert, waterLevel: e.target.value })}
-          />
-          <TextField
-            label="Affected Population"
-            value={newAlert.affected}
-            onChange={(e) => setNewAlert({ ...newAlert, affected: e.target.value })}
-          />
-          <TextField
-            label="Alert Message"
-            multiline
-            rows={3}
-            value={newAlert.message}
-            onChange={(e) => setNewAlert({ ...newAlert, message: e.target.value })}
-          />
-          <TextField
-            label="Latitude"
-            value={newAlert.lat}
-            onChange={(e) => setNewAlert({ ...newAlert, lat: e.target.value })}
-          />
-          <TextField
-            label="Longitude"
-            value={newAlert.lng}
-            onChange={(e) => setNewAlert({ ...newAlert, lng: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreateAlert}>
-            Create
-          </Button>
-        </DialogActions>
-        </Dialog>
-      )}
+
     </Container>
   );
 }

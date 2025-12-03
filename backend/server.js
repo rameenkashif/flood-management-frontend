@@ -45,6 +45,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Ensure admin user exists (create default admin if missing)
 const User = require('./models/User');
+const Alert = require('./models/Alert');
 const ensureAdmin = async () => {
   try {
     const adminEmail = 'admin@gmail.com';
@@ -64,20 +65,34 @@ const ensureAdmin = async () => {
   }
 };
 
+// Clear all alerts from database on startup
+const clearAllAlerts = async () => {
+  try {
+    const result = await Alert.deleteMany({});
+    console.log(`🗑️ Cleared ${result.deletedCount} existing alerts from database`);
+  } catch (err) {
+    console.warn('⚠️ Failed to clear alerts:', err && err.message ? err.message : err);
+  }
+};
+
 // Run admin creation best-effort after a short delay so DB connection is ready
-setTimeout(() => ensureAdmin().catch(() => {}), 1000);
+setTimeout(() => {
+  ensureAdmin().catch(() => {});
+  clearAllAlerts().catch(() => {});
+}, 1000);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// Periodically fetch external alerts
+// Periodically fetch external alerts (every 10 minutes by default)
 const FETCH_INTERVAL_MS = Number(process.env.FETCH_INTERVAL_MS) || 10 * 60 * 1000;
+console.log(`⏱️ Alert refresh interval set to ${FETCH_INTERVAL_MS / 1000} seconds (${FETCH_INTERVAL_MS / 60000} minutes)`);
 setInterval(() => {
   floodController.fetchExternalAlerts()
-    .then((r) => console.log(`Fetched ${Array.isArray(r) ? r.length : r} external alerts`))
-    .catch((e) => console.warn('Error fetching external alerts:', e && e.message ? e.message : e));
+    .then((r) => console.log(`✅ Periodic fetch: ${Array.isArray(r) ? r.length : 0} alerts updated`))
+    .catch((e) => console.warn('⚠️ Error fetching external alerts:', e && e.message ? e.message : e));
 }, FETCH_INTERVAL_MS);
 
 // Run once at startup (best-effort)
