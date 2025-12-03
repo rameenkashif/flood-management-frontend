@@ -16,7 +16,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { getVolunteers, createVolunteer, getPakistanCities } from "../services/api";
+import { getVolunteers, createVolunteer, getPakistanCities, changeVolunteerStatus } from "../services/api";
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
@@ -94,6 +94,23 @@ function Volunteers() {
     }
   };
 
+  const handleChangeStatus = async (vol) => {
+    if (!authContext?.user || authContext.user.role !== 'admin') {
+      alert('Only admins can change volunteer status');
+      return;
+    }
+    const newStatus = vol.status === 'Available' ? 'Deployed' : 'Available';
+    const ok = window.confirm(`Change status of ${vol.name} to ${newStatus}?`);
+    if (!ok) return;
+    try {
+      const updated = await changeVolunteerStatus(vol._id || vol.id, newStatus);
+      setVolunteers((prev) => prev.map((v) => (v._id === updated._id || v.id === updated._id ? updated : v)));
+    } catch (err) {
+      console.error('Failed to change status', err);
+      alert('Failed to change status: ' + (err.message || err));
+    }
+  };
+
   const filteredVolunteers = volunteers.filter((v) => {
     const skillMatch = skillFilter ? v.skill === skillFilter : true;
     const statusMatch = statusFilter ? v.status === statusFilter : true;
@@ -136,6 +153,13 @@ function Volunteers() {
                 >
                   ⚙️ Status: {vol.status}
                 </Typography>
+                {authContext?.user?.role === 'admin' && (
+                  <Box mt={2}>
+                    <Button size="small" variant="outlined" onClick={() => handleChangeStatus(vol)}>
+                      Change Status
+                    </Button>
+                  </Box>
+                )}
               </Paper>
             </Grid>
           ))

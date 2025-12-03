@@ -50,4 +50,26 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ---------------------------------------------
+// Admin: change volunteer status
+// ---------------------------------------------
+router.patch('/:id/status', protect, async (req, res) => {
+  try {
+    // only admin can change status
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Admin privileges required' });
+
+    const id = req.params.id;
+    const { status } = req.body;
+    if (!status || (status !== 'Available' && status !== 'Deployed')) {
+      return res.status(400).json({ error: 'Invalid status. Allowed: Available, Deployed' });
+    }
+
+    const volunteer = await Volunteer.findByIdAndUpdate(id, { status }, { new: true });
+    if (!volunteer) return res.status(404).json({ error: 'Volunteer not found' });
+    res.json(volunteer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

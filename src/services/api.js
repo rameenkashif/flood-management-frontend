@@ -391,3 +391,14 @@ export const createVolunteer = async (volunteerData) => {
     throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
   }
 };
+
+export const changeVolunteerStatus = async (id, status) => {
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/volunteers/${id}/status`, { status }, { headers: { 'Content-Type': 'application/json', ...authHeaders() }, timeout: 5000 });
+    return response.data;
+  } catch (err) {
+    console.error('Failed to change volunteer status:', err.response?.data || err.message || err);
+    const message = err.response?.data?.message || err.response?.data || err.message || 'Change status failed';
+    throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+  }
+};
