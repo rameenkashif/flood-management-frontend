@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = "/api"; // use relative path and rely on react dev proxy
+// Allow overriding the API base URL at build time (Vercel/Netlify):
+// set `REACT_APP_API_BASE_URL` to e.g. `https://your-backend.example.com`.
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api"; // use env var or relative path
 
 // ---------------- FLOOD ALERT MOCK DATA ---------------- //
 let localAlerts = [
